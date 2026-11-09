@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ControleVendasLajes.ViewModels"
+             xmlns:models="clr-namespace:ControleVendasLajes.Models"
+             x:Class="ControleVendasLajes.Views.DashboardPage"
+             x:Name="DashboardPageRoot"
+             x:DataType="vm:DashboardViewModel"
+             Title="Dashboard"
+             BackgroundColor="#F4F6F9">
+
+    <Grid>
+        <!-- 1. Conteúdo Principal com Recarregamento (Pull-to-refresh) -->
+        <RefreshView IsRefreshing="{Binding IsRefreshing}" 
+                     Command="{Binding RefreshDashboardCommand}">
+            <ScrollView>
+                <VerticalStackLayout Spacing="14" Padding="18,14,18,24">
+                    
+                    <!-- HEADER COM CARDS DE KPIs (Faturamento, M² e Status Operacionais) -->
+                    <VerticalStackLayout Spacing="10">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Text="RESUMO DO MÊS ATUAL" 
+                                   FontSize="12" 
+                                   FontAttributes="Bold" 
+                                   TextColor="#64748B" 
+                                   CharacterSpacing="1" 
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="1"
+                                    Text="🔄 Atualizar" 
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    TextColor="#0A84FF"
+                                    BackgroundColor="#E0F2FE"
+                                    Padding="10,4"
+                                    HeightRequest="30"
+                                    CornerRadius="8"
+                                    Command="{Binding RefreshDashboardCommand}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="12">
+                            <!-- Card M² Vendidos -->
+                            <Border Grid.Column="0" BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="14">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                                <VerticalStackLayout Spacing="6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Border BackgroundColor="#EAF2FF" StrokeThickness="0" WidthRequest="28" HeightRequest="28">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="6" /></Border.StrokeShape>
+                                            <Label Text="📐" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <Label Text="TOTAL M²" FontSize="11" FontAttributes="Bold" TextColor="#64748B" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding MonthTotalSqm, StringFormat='{0:N1}'}" FontSize="24" FontAttributes="Bold" TextColor="#0F172A" />
+                                    <Label Text="m² comercializados" FontSize="11" TextColor="#94A3B8" Margin="0,-2,0,0" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Card Faturamento Fechado/Pago -->
+                            <Border Grid.Column="1" BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="14">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                                <VerticalStackLayout Spacing="6">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Border BackgroundColor="#E8F9EE" StrokeThickness="0" WidthRequest="28" HeightRequest="28">
+                                            <Border.StrokeShape><RoundRectangle CornerRadius="6" /></Border.StrokeShape>
+                                            <Label Text="💰" FontSize="13" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <Label Text="RECEITA" FontSize="11" FontAttributes="Bold" TextColor="#64748B" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding MonthTotalRevenue, StringFormat='R$ {0:N0}'}" FontSize="22" FontAttributes="Bold" TextColor="#10B981" />
+                                    <Label Text="faturamento recebido" FontSize="11" TextColor="#94A3B8" Margin="0,-2,0,0" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <!-- Alertas Operacionais: Entregas e Pagamentos Pendentes -->
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="12">
+                            <Border Grid.Column="0" BackgroundColor="#FFF8ED" Stroke="#FED7AA" StrokeThickness="1" Padding="12,10">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                    <Label Text="🚚" FontSize="16" VerticalOptions="Center" />
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="{Binding PendingDeliveriesCount, StringFormat='{0} Entregas'}" FontAttributes="Bold" FontSize="13" TextColor="#EA580C" />
+                                        <Label Text="pendentes" FontSize="11" TextColor="#9A3412" />
+                                    </VerticalStackLayout>
+                                </HorizontalStackLayout>
+                            </Border>
+
+                            <Border Grid.Column="1" BackgroundColor="#FEF2F2" Stroke="#FECACA" StrokeThickness="1" Padding="12,10">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                    <Label Text="⏳" FontSize="16" VerticalOptions="Center" />
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="{Binding PendingPaymentsCount, StringFormat='{0} Pagamentos'}" FontAttributes="Bold" FontSize="13" TextColor="#DC2626" />
+                                        <Label Text="em aberto" FontSize="11" TextColor="#991B1B" />
+                                    </VerticalStackLayout>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <!-- LISTAGEM DOS ÚLTIMOS PEDIDOS -->
+                    <VerticalStackLayout Spacing="8" Margin="0,6,0,0">
+                        <Label Text="ÚLTIMAS VENDAS CADASTRADAS" 
+                               FontSize="12" 
+                               FontAttributes="Bold" 
+                               TextColor="#64748B" 
+                               CharacterSpacing="1" />
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding RecentSales}" Spacing="10">
+                            <BindableLayout.EmptyView>
+                                <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="28" Margin="0,10">
+                                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                                    <VerticalStackLayout HorizontalOptions="Center" Spacing="8">
+                                        <Label Text="📋" FontSize="36" HorizontalOptions="Center" />
+                                        <Label Text="Nenhum pedido registrado este mês" FontAttributes="Bold" FontSize="15" TextColor="#1E293B" HorizontalOptions="Center" />
+                                        <Label Text="Cadastre novos pedidos no menu 'Vendas'." FontSize="13" TextColor="#94A3B8" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </BindableLayout.EmptyView>
+
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:Sale">
+                                    <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer 
+                                                x:DataType="{x:Null}"
+                                                Command="{Binding Source={x:Reference DashboardPageRoot}, Path=BindingContext.OpenSaleDetailCommand}" 
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto, Auto">
+                                            
+                                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding ClientName}" FontAttributes="Bold" FontSize="16" TextColor="#0F172A" />
+                                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding TotalAmount, StringFormat='R$ {0:N2}'}" FontAttributes="Bold" FontSize="16" TextColor="#0A84FF" />
+
+                                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding ProductName}" FontSize="13" TextColor="#64748B" Margin="0,4,0,0" />
+                                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding AreaSqm, StringFormat='{0:N1} m²'}" FontSize="13" FontAttributes="Bold" TextColor="#334155" HorizontalTextAlignment="End" Margin="0,4,0,0" />
+
+                                            <!-- Duplo Status: Entrega e Pagamento -->
+                                            <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="Auto, Auto, *" ColumnSpacing="6" Margin="0,10,0,0">
+                                                <Border BackgroundColor="{Binding DeliveryStatusColor}" StrokeThickness="0" Padding="8,3">
+                                                    <Border.StrokeShape><RoundRectangle CornerRadius="6" /></Border.StrokeShape>
+                                                    <Label Text="{Binding DeliveryStatusText}" FontSize="10" FontAttributes="Bold" TextColor="#FFFFFF" />
+                                                </Border>
+
+                                                <Border Grid.Column="1" BackgroundColor="{Binding PaymentStatusColor}" StrokeThickness="0" Padding="8,3">
+                                                    <Border.StrokeShape><RoundRectangle CornerRadius="6" /></Border.StrokeShape>
+                                                    <Label Text="{Binding PaymentStatusText}" FontSize="10" FontAttributes="Bold" TextColor="#FFFFFF" />
+                                                </Border>
+
+                                                <Label Grid.Column="2" Text="{Binding DeliveryAddress, StringFormat='📍 {0}'}" FontSize="11" TextColor="#94A3B8" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Rodapé Dinâmico e Discreto ao Final do Conteúdo -->
+                    <VerticalStackLayout HorizontalOptions="Center" Margin="0,16,0,12">
+                        <Label Text="Desenvolvido por Wesley Godoi" 
+                               FontSize="11" 
+                               FontAttributes="Bold" 
+                               TextColor="#94A3B8" 
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- 2. Overlay Visual de Carregamento Inicial (Reload ao Abrir o App) -->
+        <Grid IsVisible="{Binding IsLoading}" 
+              BackgroundColor="#F4F6F9" 
+              HorizontalOptions="Fill" 
+              VerticalOptions="Fill">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
+                <Border BackgroundColor="#0A84FF" 
+                        WidthRequest="76" 
+                        HeightRequest="76" 
+                        StrokeThickness="0"
+                        HorizontalOptions="Center">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="22" /></Border.StrokeShape>
+                    <Label Text="🏗️" FontSize="38" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Controle de Vendas de Lajes" 
+                       FontSize="18" 
+                       FontAttributes="Bold" 
+                       TextColor="#0F172A" 
+                       HorizontalTextAlignment="Center" />
+                <ActivityIndicator IsRunning="{Binding IsLoading}" 
+                                   Color="#0A84FF" 
+                                   WidthRequest="36" 
+                                   HeightRequest="36" 
+                                   HorizontalOptions="Center" />
+                <Label Text="Carregando dados..." 
+                       FontSize="13" 
+                       TextColor="#64748B" 
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+
+</ContentPage>

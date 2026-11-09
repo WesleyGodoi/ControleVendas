@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ControleVendasLajes.ViewModels"
+             xmlns:models="clr-namespace:ControleVendasLajes.Models"
+             x:Class="ControleVendasLajes.Views.SaleDetailPage"
+             x:Name="SaleDetailPageRoot"
+             x:DataType="vm:SaleDetailViewModel"
+             Title="Detalhes do Pedido"
+             BackgroundColor="#F4F6F9">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="18,14,18,36">
+
+            <!-- 1. CARD PRINCIPAL: RESUMO E SALDO FINANCEIRO -->
+            <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="18">
+                <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="{Binding Sale.SaleDate, StringFormat='Data: {0:dd/MM/yyyy}'}" 
+                               FontSize="13" 
+                               TextColor="#64748B" 
+                               VerticalOptions="Center" />
+
+                        <!-- Badges de Status -->
+                        <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                            <Border BackgroundColor="{Binding Sale.DeliveryStatusColor}" StrokeThickness="0" Padding="8,3">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="6" /></Border.StrokeShape>
+                                <Label Text="{Binding Sale.DeliveryStatusText}" FontSize="11" FontAttributes="Bold" TextColor="#FFFFFF" />
+                            </Border>
+
+                            <Border BackgroundColor="{Binding Sale.PaymentStatusColor}" StrokeThickness="0" Padding="8,3">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="6" /></Border.StrokeShape>
+                                <Label Text="{Binding Sale.PaymentStatusText}" FontSize="11" FontAttributes="Bold" TextColor="#FFFFFF" />
+                            </Border>
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="0.5" Color="#E5E9F0" />
+
+                    <!-- Quadro Financeiro Comparativo (Total vs Recebido vs Restante) -->
+                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="VALOR TOTAL" FontSize="10" FontAttributes="Bold" TextColor="#64748B" />
+                            <Label Text="{Binding Sale.TotalAmount, StringFormat='R$ {0:N2}'}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="RECEBIDO" FontSize="10" FontAttributes="Bold" TextColor="#10B981" />
+                            <Label Text="{Binding TotalPaid, StringFormat='R$ {0:N2}'}" FontSize="15" FontAttributes="Bold" TextColor="#10B981" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="2" Spacing="2">
+                            <Label Text="A RECEBER" FontSize="10" FontAttributes="Bold" TextColor="#EF4444" />
+                            <Label Text="{Binding RemainingAmount, StringFormat='R$ {0:N2}'}" FontSize="15" FontAttributes="Bold" TextColor="#EF4444" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Barra de Progresso do Pagamento -->
+                    <VerticalStackLayout Spacing="4">
+                        <ProgressBar Progress="{Binding PaidProgress}" 
+                                     ProgressColor="#10B981" 
+                                     ScaleY="1.8" />
+                        <Label Text="{Binding PaidProgress, StringFormat='{0:P0} quitado'}" 
+                               FontSize="11" 
+                               TextColor="#64748B" 
+                               HorizontalOptions="End" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 2. CARD: HISTÓRICO DE RECEBIMENTOS & PAGAMENTO PARCIAL -->
+            <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label Text="HISTÓRICO DE RECEBIMENTOS" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" VerticalOptions="Center" CharacterSpacing="1" />
+                    
+                    <Button Grid.Column="1"
+                            Text="{Binding PaymentFormButtonText}"
+                            Command="{Binding TogglePaymentFormCommand}"
+                            BackgroundColor="#0A84FF"
+                            TextColor="#FFFFFF"
+                            FontSize="12"
+                            FontAttributes="Bold"
+                            HeightRequest="32"
+                            CornerRadius="8"
+                            Padding="12,0" />
+                </Grid>
+
+                <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                    <VerticalStackLayout Spacing="12">
+
+                        <!-- Formulário de Registro de Recebimento Parcial / Quitação -->
+                        <Border IsVisible="{Binding ShowPaymentForm}" 
+                                BackgroundColor="#F8FAFC" 
+                                Stroke="#0A84FF" 
+                                StrokeThickness="1" 
+                                Padding="14">
+                            <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="REGISTRAR NOVO RECEBIMENTO" FontSize="12" FontAttributes="Bold" TextColor="#0A84FF" />
+
+                                <!-- Entrada de Valor com Atalho de Quitação -->
+                                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                                    <Border BackgroundColor="#FFFFFF" Stroke="#CBD5E1" StrokeThickness="1" Padding="10,0">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                        <Entry Text="{Binding NewPaymentAmountText}"
+                                               Placeholder="R$ 0,00"
+                                               Keyboard="Numeric"
+                                               FontSize="15"
+                                               FontAttributes="Bold"
+                                               TextColor="#0F172A"
+                                               BackgroundColor="Transparent" />
+                                    </Border>
+
+                                    <Button Grid.Column="1"
+                                            Text="Quitar Restante"
+                                            Command="{Binding FillTotalRemainingCommand}"
+                                            BackgroundColor="#E0F2FE"
+                                            TextColor="#0284C7"
+                                            FontSize="12"
+                                            FontAttributes="Bold"
+                                            HeightRequest="42"
+                                            CornerRadius="8"
+                                            Padding="10,0" />
+                                </Grid>
+
+                                <!-- Forma de Pagamento e Data -->
+                                <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                                    <Border BackgroundColor="#FFFFFF" Stroke="#CBD5E1" StrokeThickness="1" Padding="8,0">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                        <Picker ItemsSource="{Binding PaymentMethodOptions}"
+                                                SelectedItem="{Binding SelectedPaymentMethod}"
+                                                Title="Forma"
+                                                FontSize="13"
+                                                TextColor="#0F172A" />
+                                    </Border>
+
+                                    <Border Grid.Column="1" BackgroundColor="#FFFFFF" Stroke="#CBD5E1" StrokeThickness="1" Padding="8,0">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                        <DatePicker Date="{Binding NewPaymentDate}"
+                                                    Format="dd/MM/yyyy"
+                                                    FontSize="13"
+                                                    TextColor="#0F172A" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- Observação -->
+                                <Border BackgroundColor="#FFFFFF" Stroke="#CBD5E1" StrokeThickness="1" Padding="10,2">
+                                    <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                    <Entry Text="{Binding NewPaymentNotes}"
+                                           Placeholder="Obs (ex: Entrada 50%, Pagamento na entrega)"
+                                           FontSize="13"
+                                           TextColor="#0F172A"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+
+                                <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                                    <Button Text="Cancelar"
+                                            Command="{Binding TogglePaymentFormCommand}"
+                                            BackgroundColor="#F1F5F9"
+                                            TextColor="#64748B"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            HeightRequest="40"
+                                            CornerRadius="8" />
+
+                                    <Button Grid.Column="1"
+                                            Text="💵 Confirmar Recebimento"
+                                            Command="{Binding RegisterPaymentCommand}"
+                                            BackgroundColor="#10B981"
+                                            TextColor="#FFFFFF"
+                                            FontSize="13"
+                                            FontAttributes="Bold"
+                                            HeightRequest="40"
+                                            CornerRadius="8" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Lista de Recebimentos Realizados -->
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Payments}" Spacing="8">
+                            <BindableLayout.EmptyView>
+                                <VerticalStackLayout Spacing="4" Padding="12" HorizontalOptions="Center">
+                                    <Label Text="💳" FontSize="26" HorizontalOptions="Center" />
+                                    <Label Text="Nenhum pagamento registrado ainda." FontSize="13" TextColor="#64748B" HorizontalOptions="Center" />
+                                    <Label Text="Clique em '+ Receber Valor' para lançar entradas ou parcelas." FontSize="11" TextColor="#94A3B8" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </BindableLayout.EmptyView>
+
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:SalePayment">
+                                    <Border BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="12">
+                                        <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                        <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="8">
+                                            <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                                <HorizontalStackLayout Spacing="6">
+                                                    <Border BackgroundColor="#E0E7FF" StrokeThickness="0" Padding="6,2">
+                                                        <Border.StrokeShape><RoundRectangle CornerRadius="4" /></Border.StrokeShape>
+                                                        <Label Text="{Binding PaymentMethod}" FontSize="11" FontAttributes="Bold" TextColor="#4338CA" />
+                                                    </Border>
+                                                    <Label Text="{Binding PaymentDate, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="11" TextColor="#64748B" VerticalOptions="Center" />
+                                                </HorizontalStackLayout>
+                                                <Label Text="{Binding Notes}" FontSize="12" TextColor="#334155" LineBreakMode="TailTruncation" />
+                                            </VerticalStackLayout>
+
+                                            <Label Grid.Column="1" 
+                                                   Text="{Binding Amount, StringFormat='R$ {0:N2}'}" 
+                                                   FontSize="15" 
+                                                   FontAttributes="Bold" 
+                                                   TextColor="#10B981" 
+                                                   VerticalOptions="Center" />
+
+                                            <Button Grid.Column="2"
+                                                    Text="✕"
+                                                    x:DataType="{x:Null}"
+                                                    Command="{Binding Source={x:Reference SaleDetailPageRoot}, Path=BindingContext.DeletePaymentCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="#FEE2E2"
+                                                    TextColor="#EF4444"
+                                                    FontSize="12"
+                                                    FontAttributes="Bold"
+                                                    WidthRequest="30"
+                                                    HeightRequest="30"
+                                                    CornerRadius="15"
+                                                    Padding="0"
+                                                    VerticalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- 3. CARD: CLIENTE E ENTREGA -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="CLIENTE E ENTREGA" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" CharacterSpacing="1" />
+                <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{Binding Sale.ClientName}" FontSize="18" FontAttributes="Bold" TextColor="#0F172A" />
+                        <Label Text="{Binding Sale.ClientPhone, StringFormat='📞 Telefone: {0}'}" FontSize="14" TextColor="#0A84FF" />
+                        <Label Text="{Binding Sale.DeliveryAddress, StringFormat='📍 Obra: {0}'}" FontSize="14" TextColor="#334155" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- 4. CARD: ESPECIFICAÇÕES DA LAJE -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="ESPECIFICAÇÕES DA LAJE" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" CharacterSpacing="1" />
+                <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                    <VerticalStackLayout Spacing="10">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Text="Produto:" FontSize="15" TextColor="#64748B" />
+                            <Label Grid.Column="1" Text="{Binding Sale.ProductName}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                        </Grid>
+                        <BoxView HeightRequest="0.5" Color="#E5E9F0" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Text="Metragem (m²):" FontSize="15" TextColor="#64748B" />
+                            <Label Grid.Column="1" Text="{Binding Sale.AreaSqm, StringFormat='{0:N2} m²'}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                        </Grid>
+                        <BoxView HeightRequest="0.5" Color="#E5E9F0" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Text="Preço por m²:" FontSize="15" TextColor="#64748B" />
+                            <Label Grid.Column="1" Text="{Binding Sale.UnitPriceSqm, StringFormat='R$ {0:N2}/m²'}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- 5. CARD: STATUS OPERACIONAL (ENTREGA & NEGOCIAÇÃO) -->
+            <VerticalStackLayout Spacing="6">
+                <Label Text="CONTROLE OPERACIONAL" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" CharacterSpacing="1" />
+                <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                    <VerticalStackLayout Spacing="12">
+                        
+                        <!-- Status da Entrega -->
+                        <Grid ColumnDefinitions="*, 170" HeightRequest="44">
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="🚚 Status da Entrega" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                                <Label Text="Logística e envio para obra" FontSize="11" TextColor="#94A3B8" />
+                            </VerticalStackLayout>
+                            <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="8,0">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                <Picker ItemsSource="{Binding DeliveryStatusList}"
+                                        SelectedItem="{Binding CurrentDeliveryStatus}"
+                                        FontSize="14"
+                                        FontAttributes="Bold"
+                                        TextColor="#0A84FF" />
+                            </Border>
+                        </Grid>
+
+                        <BoxView HeightRequest="0.5" Color="#E5E9F0" />
+
+                        <!-- Status da Negociação -->
+                        <Grid ColumnDefinitions="*, 170" HeightRequest="44">
+                            <VerticalStackLayout VerticalOptions="Center">
+                                <Label Text="📝 Status Negociação" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                                <Label Text="Orçamento ou Fechado" FontSize="11" TextColor="#94A3B8" />
+                            </VerticalStackLayout>
+                            <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="8,0">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                <Picker ItemsSource="{Binding StatusList}"
+                                        SelectedItem="{Binding CurrentStatus}"
+                                        FontSize="14"
+                                        FontAttributes="Bold"
+                                        TextColor="#0A84FF" />
+                            </Border>
+                        </Grid>
+
+                        <Button Text="Salvar Alterações de Status"
+                                Command="{Binding SaveChangesCommand}"
+                                BackgroundColor="#0A84FF"
+                                TextColor="#FFFFFF"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                HeightRequest="48"
+                                CornerRadius="12"
+                                Margin="0,6,0,0" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- 6. AÇÃO DE EXCLUSÃO (Se permitido) -->
+            <Border BackgroundColor="#FEECEB" Stroke="#FF3B30" StrokeThickness="0.5" Padding="14" IsVisible="{Binding CanDelete}">
+                <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Este pedido ainda não foi Entregue e não possui pagamentos. Caso o cliente tenha cancelado, você pode excluí-lo:" 
+                           FontSize="12" 
+                           TextColor="#C9342B" />
+
+                    <Button Text="🗑️ Excluir Pedido"
+                            Command="{Binding DeleteSaleCommand}"
+                            BackgroundColor="#FF3B30"
+                            TextColor="#FFFFFF"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            HeightRequest="44"
+                            CornerRadius="10" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Rodapé de Autoria -->
+            <VerticalStackLayout HorizontalOptions="Center" Padding="0,12,0,16">
+                <Label Text="Desenvolvido por Wesley Godoi" 
+                       FontSize="11" 
+                       FontAttributes="Bold" 
+                       TextColor="#94A3B8" 
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ControleVendasLajes.ViewModels"
+             xmlns:models="clr-namespace:ControleVendasLajes.Models"
+             x:Class="ControleVendasLajes.Views.ProductsPage"
+             x:Name="ProductsPageRoot"
+             x:DataType="vm:ProductsViewModel"
+             Title="Tipos de Laje"
+             BackgroundColor="#F2F2F7">
+
+    <Grid RowDefinitions="Auto, *">
+        <!-- Formulário de Cadastro / Edição de Lajes -->
+        <Border Grid.Row="0" BackgroundColor="#FFFFFF" StrokeThickness="0" Margin="16,12,16,8" Padding="16">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14" />
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label Text="{Binding FormTitle}" FontSize="12" FontAttributes="Bold" TextColor="#007AFF" VerticalOptions="Center" />
+                    <Button Grid.Column="1" 
+                            Text="Cancelar Edição" 
+                            Command="{Binding CancelEditCommand}" 
+                            IsVisible="{Binding IsEditing}"
+                            BackgroundColor="Transparent"
+                            TextColor="#FF3B30"
+                            FontSize="12"
+                            HeightRequest="32"
+                            Padding="8,0" />
+                </Grid>
+
+                <Entry Placeholder="Ex: Treliçada c/ EPS H10, Cerâmica H12..."
+                       Text="{Binding Name}"
+                       FontSize="15"
+                       ClearButtonVisibility="WhileEditing" />
+
+                <Grid ColumnDefinitions="*, 140" HeightRequest="44">
+                    <Label Text="Valor Padrão (R$/m²)" VerticalOptions="Center" FontSize="15" TextColor="#1C1C1E" />
+                    <Entry Grid.Column="1"
+                           Placeholder="R$ 0,00"
+                           Text="{Binding DefaultPricePerSqmText}"
+                           Keyboard="Numeric"
+                           HorizontalTextAlignment="End"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="#1C1C1E"
+                           ClearButtonVisibility="WhileEditing" />
+                </Grid>
+
+                <Button Text="Salvar Tipo de Laje"
+                        Command="{Binding SaveProductCommand}"
+                        BackgroundColor="#007AFF"
+                        TextColor="#FFFFFF"
+                        FontSize="15"
+                        FontAttributes="Bold"
+                        CornerRadius="10"
+                        HeightRequest="46"
+                        Margin="0,4,0,0" />
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Lista de Lajes com Botões de Editar e Excluir -->
+        <VerticalStackLayout Grid.Row="1" Spacing="8" Padding="16,4,16,16">
+            <Label Text="PRODUTOS CADASTRADOS" FontSize="12" FontAttributes="Bold" TextColor="#6D6D72" Margin="6,0,0,4" />
+
+            <CollectionView ItemsSource="{Binding Products}">
+                <CollectionView.EmptyView>
+                    <Label Text="Nenhum tipo de laje cadastrado." 
+                           HorizontalOptions="Center" 
+                           Margin="0,30,0,0" 
+                           TextColor="#8E8E93" 
+                           FontSize="14" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Product">
+                        <Border BackgroundColor="#FFFFFF" StrokeThickness="0" Padding="14" Margin="0,0,0,8">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="8">
+                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                    <Label Text="{Binding Name}" 
+                                           FontSize="15" 
+                                           FontAttributes="Bold" 
+                                           TextColor="#1C1C1E" />
+                                    <Label Text="{Binding DefaultPricePerSqm, StringFormat='R$ {0:N2}/m²'}" 
+                                           FontSize="14" 
+                                           FontAttributes="Bold" 
+                                           TextColor="#34C759" 
+                                           Margin="0,2,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Botões de Ação: Editar e Excluir -->
+                                <Button Grid.Column="1"
+                                        Text="✏️"
+                                        ToolTipProperties.Text="Editar Tipo de Laje"
+                                        BackgroundColor="#F2F2F7"
+                                        TextColor="#007AFF"
+                                        WidthRequest="38"
+                                        HeightRequest="38"
+                                        CornerRadius="8"
+                                        Padding="0"
+                                        VerticalOptions="Center"
+                                        x:DataType="{x:Null}"
+                                        Command="{Binding Source={x:Reference ProductsPageRoot}, Path=BindingContext.StartEditCommand}"
+                                        CommandParameter="{Binding .}" />
+
+                                <Button Grid.Column="2"
+                                        Text="🗑️"
+                                        ToolTipProperties.Text="Excluir Tipo de Laje"
+                                        BackgroundColor="#FEECEB"
+                                        TextColor="#FF3B30"
+                                        WidthRequest="38"
+                                        HeightRequest="38"
+                                        CornerRadius="8"
+                                        Padding="0"
+                                        VerticalOptions="Center"
+                                        x:DataType="{x:Null}"
+                                        Command="{Binding Source={x:Reference ProductsPageRoot}, Path=BindingContext.DeleteProductCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.Footer>
+                    <VerticalStackLayout Padding="0,16,0,20" HorizontalOptions="Center">
+                        <Label Text="Desenvolvido por Wesley Godoi" 
+                               FontSize="11" 
+                               FontAttributes="Bold" 
+                               TextColor="#94A3B8" 
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </CollectionView.Footer>
+            </CollectionView>
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>

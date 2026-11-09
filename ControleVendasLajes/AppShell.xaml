@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="ControleVendasLajes.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:ControleVendasLajes.Views"
+    Title="Controle de Vendas de Lajes"
+    FlyoutBehavior="Flyout"
+    FlyoutBackgroundColor="#FFFFFF"
+    FlyoutWidth="290">
+
+    <!-- Cabeçalho do Menu Lateral -->
+    <Shell.FlyoutHeader>
+        <Grid HeightRequest="160" BackgroundColor="#0A84FF" Padding="20">
+            <VerticalStackLayout VerticalOptions="End" Spacing="6">
+                <Border BackgroundColor="#FFFFFF" 
+                        WidthRequest="44" 
+                        HeightRequest="44" 
+                        HorizontalOptions="Start"
+                        StrokeThickness="0">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="22" /></Border.StrokeShape>
+                    <Label Text="🏗️" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Controle de Vendas" 
+                       FontSize="18" 
+                       FontAttributes="Bold" 
+                       TextColor="#FFFFFF" />
+                <Label Text="Lajes Pré-Moldadas" 
+                       FontSize="13" 
+                       TextColor="#E0F2FE" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <!-- Template customizado e de alto contraste para os itens do Menu Lateral -->
+    <Shell.ItemTemplate>
+        <DataTemplate>
+            <Border BackgroundColor="Transparent" 
+                    StrokeThickness="0" 
+                    Margin="10,3" 
+                    Padding="14,10">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="Transparent" />
+                                    <Setter TargetName="ItemLabel" Property="Label.TextColor" Value="#1E293B" />
+                                    <Setter TargetName="ItemLabel" Property="Label.FontAttributes" Value="None" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Selected">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="#E0F2FE" />
+                                    <Setter TargetName="ItemLabel" Property="Label.TextColor" Value="#0284C7" />
+                                    <Setter TargetName="ItemLabel" Property="Label.FontAttributes" Value="Bold" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </VisualStateManager.VisualStateGroups>
+                <Grid ColumnDefinitions="34,*" VerticalOptions="Center">
+                    <Image Source="{Binding FlyoutIcon}" 
+                           WidthRequest="22" 
+                           HeightRequest="22" 
+                           VerticalOptions="Center" 
+                           HorizontalOptions="Start" />
+                    <Label x:Name="ItemLabel" 
+                           Grid.Column="1" 
+                           Text="{Binding Title}" 
+                           FontSize="15" 
+                           TextColor="#1E293B" 
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Shell.ItemTemplate>
+
+    <!-- Itens do Menu Lateral -->
+    <FlyoutItem Title="Dashboard" 
+                FlyoutIcon="nav_dashboard.png" 
+                Icon="nav_dashboard.png" 
+                Route="DashboardPage">
+        <ShellContent
+            Title="Dashboard"
+            ContentTemplate="{DataTemplate views:DashboardPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Vendas" 
+                FlyoutIcon="nav_sales.png" 
+                Icon="nav_sales.png" 
+                Route="SalesListPage">
+        <ShellContent
+            Title="Vendas"
+            ContentTemplate="{DataTemplate views:SalesListPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Clientes" 
+                FlyoutIcon="nav_clients.png" 
+                Icon="nav_clients.png" 
+                Route="ClientsPage">
+        <ShellContent
+            Title="Clientes"
+            ContentTemplate="{DataTemplate views:ClientsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Tipo de Laje" 
+                FlyoutIcon="nav_slabs.png" 
+                Icon="nav_slabs.png" 
+                Route="ProductsPage">
+        <ShellContent
+            Title="Tipo de Laje"
+            ContentTemplate="{DataTemplate views:ProductsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Backup &amp; Dados" 
+                FlyoutIcon="nav_backup.png" 
+                Icon="nav_backup.png" 
+                Route="BackupPage">
+        <ShellContent
+            Title="Backup &amp; Dados"
+            ContentTemplate="{DataTemplate views:BackupPage}" />
+    </FlyoutItem>
+
+    <!-- Rodapé do Menu Lateral -->
+    <Shell.FlyoutFooter>
+        <Grid HeightRequest="65" 
+              HorizontalOptions="Fill" 
+              VerticalOptions="End" 
+              BackgroundColor="#F8FAFC">
+            <!-- Linha divisória no topo do rodapé -->
+            <BoxView HeightRequest="1" 
+                     Color="#E2E8F0" 
+                     VerticalOptions="Start" 
+                     HorizontalOptions="Fill" />
+            
+            <VerticalStackLayout HorizontalOptions="Fill" 
+                                 VerticalOptions="Center" 
+                                 Spacing="2" 
+                                 Padding="12,6">
+                <Label Text="Desenvolvido por Wesley Godoi" 
+                       FontSize="11" 
+                       FontAttributes="Bold" 
+                       TextColor="#475569" 
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="Center" 
+                       LineBreakMode="NoWrap" />
+                <Label Text="Versão 1.0 • Offline First" 
+                       FontSize="10" 
+                       TextColor="#94A3B8" 
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="Center" 
+                       LineBreakMode="NoWrap" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.FlyoutFooter>
+
+</Shell>

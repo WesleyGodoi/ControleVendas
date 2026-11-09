@@ -1,0 +1,41 @@
+## .NET MAUI / C# / Visual Studio
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.userprefs
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build Results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM/
+ARM64/
+bld/
+[Bb]uild/
+
+# SQLite & Local Databases
+*.db
+*.db3
+*.db3-journal
+*.db3-wal
+*.db3-shm
+*.db-journal
+*.db-wal
+*.db-shm
+*.bak
+*.rollback
+
+# Logs & Temp files
+*.log
+*.tmp
+*.temp
+
+# OS Generated
+.DS_Store
+Thumbs.db
+desktop.ini

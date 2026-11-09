@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ControleVendasLajes.ViewModels"
+             xmlns:models="clr-namespace:ControleVendasLajes.Models"
+             x:Class="ControleVendasLajes.Views.NewSalePage"
+             x:Name="NewSalePageRoot"
+             x:DataType="vm:NewSaleViewModel"
+             Title="Novo Pedido"
+             BackgroundColor="#F4F6F9">
+
+    <Grid RowDefinitions="Auto, *, Auto">
+
+        <!-- 1. MINI DASHBOARD SUPERIOR (Header de Contexto) -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, *" ColumnSpacing="12" Padding="18,12,18,6">
+            <Border Grid.Column="0" BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="14">
+                <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
+                <VerticalStackLayout Spacing="3">
+                    <Label Text="M² NO MÊS" FontSize="10" FontAttributes="Bold" TextColor="#64748B" />
+                    <Label Text="{Binding MonthTotalSqm, StringFormat='{0:N1} m²'}" FontSize="18" FontAttributes="Bold" TextColor="#0F172A" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Grid.Column="1" BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="14">
+                <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
+                <VerticalStackLayout Spacing="3">
+                    <Label Text="FECHADO / PAGO" FontSize="10" FontAttributes="Bold" TextColor="#64748B" />
+                    <Label Text="{Binding MonthTotalRevenue, StringFormat='R$ {0:N0}'}" FontSize="18" FontAttributes="Bold" TextColor="#10B981" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- 2. FORMULÁRIO COM CARDS SEPARADOS -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16" Padding="18,10,18,24">
+
+                <!-- Seção 1: Cliente & Obra -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="CLIENTE E OBRA" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" CharacterSpacing="1" />
+                    
+                    <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                        <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                        <VerticalStackLayout Spacing="10">
+                            
+                            <!-- Campo de Busca -->
+                            <Border BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="12,2">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <Entry Placeholder="🔍 Digite o nome do cliente..."
+                                           Text="{Binding ClientSearchText}"
+                                           FontSize="15"
+                                           TextColor="#0F172A"
+                                           BackgroundColor="Transparent"
+                                           ClearButtonVisibility="WhileEditing" />
+                                    
+                                    <Button Grid.Column="1"
+                                            Text="✕"
+                                            Command="{Binding ClearClientSelectionCommand}"
+                                            IsVisible="{Binding HasSelectedClient}"
+                                            BackgroundColor="#E2E8F0"
+                                            TextColor="#475569"
+                                            WidthRequest="30"
+                                            HeightRequest="30"
+                                            CornerRadius="15"
+                                            Padding="0" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Sugestões de Clientes -->
+                            <Border IsVisible="{Binding ShowClientSuggestions}" 
+                                    BackgroundColor="#F8FAFC" 
+                                    Stroke="#0A84FF" 
+                                    StrokeThickness="1" 
+                                    Padding="6" 
+                                    MaximumHeightRequest="160">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                <ScrollView>
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding FilteredClients}" Spacing="4">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Client">
+                                                <Border BackgroundColor="#FFFFFF" StrokeThickness="0" Padding="12,10">
+                                                    <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                                    <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer 
+                                                            x:DataType="{x:Null}"
+                                                            Command="{Binding Source={x:Reference NewSalePageRoot}, Path=BindingContext.SelectClientCommand}" 
+                                                            CommandParameter="{Binding .}" />
+                                                    </Border.GestureRecognizers>
+                                                    <VerticalStackLayout Spacing="2">
+                                                        <Label Text="{Binding Name}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" />
+                                                        <Label Text="{Binding DeliveryAddress, StringFormat='📍 {0}'}" FontSize="12" TextColor="#64748B" LineBreakMode="TailTruncation" />
+                                                    </VerticalStackLayout>
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </ScrollView>
+                            </Border>
+
+                            <!-- Endereço Confirmado -->
+                            <Border BackgroundColor="#F1F5F9" StrokeThickness="0" Padding="12,8">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                <Label Text="{Binding SelectedClient.DeliveryAddress, TargetNullValue='Nenhum cliente selecionado. Digite acima para buscar.'}"
+                                       FontSize="12"
+                                       TextColor="#64748B" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Seção 2: Especificação e Medidas -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="ESPECIFICAÇÃO E MEDIDAS" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" CharacterSpacing="1" />
+                    
+                    <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16">
+                        <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                        <VerticalStackLayout Spacing="10">
+                            
+                            <!-- Busca de Laje -->
+                            <Border BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="12,2">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <Entry Placeholder="🔍 Digite o tipo de laje..."
+                                           Text="{Binding ProductSearchText}"
+                                           FontSize="15"
+                                           TextColor="#0F172A"
+                                           BackgroundColor="Transparent"
+                                           ClearButtonVisibility="WhileEditing" />
+
+                                    <Button Grid.Column="1"
+                                            Text="✕"
+                                            Command="{Binding ClearProductSelectionCommand}"
+                                            IsVisible="{Binding HasSelectedProduct}"
+                                            BackgroundColor="#E2E8F0"
+                                            TextColor="#475569"
+                                            WidthRequest="30"
+                                            HeightRequest="30"
+                                            CornerRadius="15"
+                                            Padding="0" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Sugestões de Lajes -->
+                            <Border IsVisible="{Binding ShowProductSuggestions}" 
+                                    BackgroundColor="#F8FAFC" 
+                                    Stroke="#0A84FF" 
+                                    StrokeThickness="1" 
+                                    Padding="6" 
+                                    MaximumHeightRequest="150">
+                                <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                <ScrollView>
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding FilteredProducts}" Spacing="4">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Product">
+                                                <Border BackgroundColor="#FFFFFF" StrokeThickness="0" Padding="12,10">
+                                                    <Border.StrokeShape><RoundRectangle CornerRadius="8" /></Border.StrokeShape>
+                                                    <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer 
+                                                            x:DataType="{x:Null}"
+                                                            Command="{Binding Source={x:Reference NewSalePageRoot}, Path=BindingContext.SelectProductCommand}" 
+                                                            CommandParameter="{Binding .}" />
+                                                    </Border.GestureRecognizers>
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <Label Text="{Binding Name}" FontSize="15" FontAttributes="Bold" TextColor="#0F172A" VerticalOptions="Center" />
+                                                        <Label Grid.Column="1" Text="{Binding DefaultPricePerSqm, StringFormat='R$ {0:N2}/m²'}" FontSize="14" FontAttributes="Bold" TextColor="#10B981" VerticalOptions="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </ScrollView>
+                            </Border>
+
+                            <BoxView HeightRequest="0.5" Color="#E5E9F0" Margin="0,4" />
+
+                            <!-- Metragem -->
+                            <Grid ColumnDefinitions="*, 140" HeightRequest="44">
+                                <VerticalStackLayout VerticalOptions="Center">
+                                    <Label Text="Metragem Total" FontSize="15" TextColor="#0F172A" FontAttributes="Bold" />
+                                    <Label Text="Em metros quadrados (m²)" FontSize="11" TextColor="#94A3B8" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="10,0">
+                                    <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                    <Entry Text="{Binding AreaSqmText}"
+                                           Placeholder="0,00"
+                                           Keyboard="Numeric"
+                                           HorizontalTextAlignment="End"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="#0F172A"
+                                           BackgroundColor="Transparent"
+                                           ClearButtonVisibility="WhileEditing" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Valor m² -->
+                            <Grid ColumnDefinitions="*, 140" HeightRequest="44">
+                                <VerticalStackLayout VerticalOptions="Center">
+                                    <Label Text="Valor do m²" FontSize="15" TextColor="#0F172A" FontAttributes="Bold" />
+                                    <Label Text="Preço por m² praticado" FontSize="11" TextColor="#94A3B8" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" BackgroundColor="#F8FAFC" Stroke="#E2E8F0" StrokeThickness="1" Padding="10,0">
+                                    <Border.StrokeShape><RoundRectangle CornerRadius="10" /></Border.StrokeShape>
+                                    <Entry Text="{Binding UnitPriceSqmText}"
+                                           Placeholder="R$ 0,00"
+                                           Keyboard="Numeric"
+                                           HorizontalTextAlignment="End"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="#0A84FF"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Seção 3: Data e Status -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="DATA E STATUS INICIAL" FontSize="12" FontAttributes="Bold" TextColor="#64748B" Margin="6,0,0,0" CharacterSpacing="1" />
+                    
+                    <Border BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="1" Padding="16,10">
+                        <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                        <VerticalStackLayout Spacing="4">
+                            <Grid ColumnDefinitions="*, Auto" HeightRequest="44">
+                                <Label Text="Data da Negociação" VerticalOptions="Center" FontSize="15" TextColor="#0F172A" />
+                                <DatePicker Grid.Column="1"
+                                            Date="{Binding SaleDate}"
+                                            Format="dd/MM/yyyy"
+                                            FontSize="15"
+                                            TextColor="#0A84FF" />
+                            </Grid>
+
+                            <BoxView HeightRequest="0.5" Color="#E5E9F0" />
+
+                            <Grid ColumnDefinitions="*, 160" HeightRequest="44">
+                                <Label Text="Status do Pedido" VerticalOptions="Center" FontSize="15" TextColor="#0F172A" />
+                                <Picker Grid.Column="1"
+                                        ItemsSource="{Binding StatusList}"
+                                        SelectedItem="{Binding SelectedStatus}"
+                                        HorizontalTextAlignment="End"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="#0A84FF" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Totalizador Automático em Destaque -->
+                <Border BackgroundColor="#EAF2FF" Stroke="#0A84FF" StrokeThickness="1" Padding="18">
+                    <Border.StrokeShape><RoundRectangle CornerRadius="16" /></Border.StrokeShape>
+                    <Grid ColumnDefinitions="*, Auto">
+                        <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                            <Label Text="VALOR TOTAL DO PEDIDO" FontSize="11" FontAttributes="Bold" TextColor="#0A84FF" CharacterSpacing="1" />
+                            <Label Text="Cálculo automático (m² × R$)" FontSize="12" TextColor="#64748B" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1"
+                               Text="{Binding TotalAmount, StringFormat='R$ {0:N2}'}"
+                               FontSize="26"
+                               FontAttributes="Bold"
+                               TextColor="#0A84FF"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Rodapé Discreto -->
+                <Label Text="Desenvolvido por Wesley Godoi" 
+                       FontSize="11" 
+                       FontAttributes="Bold" 
+                       TextColor="#94A3B8" 
+                       HorizontalTextAlignment="Center" 
+                       Margin="0,12,0,8" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- 3. BOTÃO SALVAR ELEGANTE NO RODAPÉ -->
+        <Border Grid.Row="2" BackgroundColor="#FFFFFF" Stroke="#E5E9F0" StrokeThickness="0,1,0,0" Padding="18,10,18,14">
+            <Button Text="Salvar Pedido"
+                    Command="{Binding SaveSaleCommand}"
+                    BackgroundColor="#0A84FF"
+                    TextColor="#FFFFFF"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    HeightRequest="50"
+                    CornerRadius="14" />
+        </Border>
+
+    </Grid>
+</ContentPage>
