@@ -1,17 +1,17 @@
 # 🏗️ Controle de Vendas
 
-Sistema comercial **Offline-First** completo para gestão de vendas e orçamentos de lajes pré-moldadas, clientes, entregas e fluxo de recebimentos financeiros.
+Sistema comercial completo para gestão de vendas e orçamentos de lajes pré-moldadas, clientes, entregas e fluxo de recebimentos financeiros.
 
-O projeto conta com uma versão **Web PWA (Progressive Web App)** moderna que roda 100% offline em qualquer smartphone (iPhone e Android) e computador, além da versão nativa para desktop Windows (.NET 9).
+Disponível para acesso via web/celular e aplicativo desktop Windows (.NET 9).
 
 ---
 
 ## 📱 Tecnologias Utilizadas
 
-- **Web App (PWA):** Blazor WebAssembly (.NET 9 C#) com Service Worker e cache offline
+- **Web App:** Blazor WebAssembly (.NET 9 C#)
 - **Desktop (Windows):** .NET MAUI 9 (WinUI 3 Unpackaged)
 - **Biblioteca Compartilhada:** `ControleVendasLajes.Core` (.NET 9)
-- **Armazenamento Offline:** LocalStorage / IndexedDB (Web) e SQLite nativo (Desktop)
+- **Banco de Dados:** Armazenamento local com suporte a backup e restauração
 - **Hospedagem & CI/CD:** GitHub Actions com deploy automático no **GitHub Pages**
 - **Testes Automatizados:** xUnit com 31 testes de unidade cobrindo cálculos, regras de negócio e validações
 
@@ -49,17 +49,17 @@ O projeto conta com uma versão **Web PWA (Progressive Web App)** moderna que ro
 
 ---
 
-## 🌐 Como Acessar e Usar o PWA (iPhone / Android / Web)
+## 🌐 Como Acessar o Aplicativo
 
-O aplicativo pode ser acessado diretamente pelo navegador e instalado como aplicativo nativo em qualquer celular:
+O aplicativo pode ser acessado diretamente pelo navegador em qualquer dispositivo:
 
 👉 **Link de Acesso:** [https://wesleygodoi.github.io/ControleVendas/](https://wesleygodoi.github.io/ControleVendas/)
 
-### Como Instalar no iPhone (Safari):
-1. Abra o link acima no **Safari** do iPhone.
-2. Toque no botão de **Compartilhar** (ícone quadrado com uma seta apontando para cima).
-3. Role para baixo e selecione **"Adicionar à Tela de Início"** (*Add to Home Screen*).
-4. O ícone do app aparecerá na tela inicial do iPhone e funcionará como um aplicativo nativo, **100% offline e sem validade de expiração**.
+### Como Adicionar à Tela Inicial do Celular:
+1. Abra o link acima no navegador do celular (Safari no iPhone ou Chrome no Android).
+2. Toque no botão de menu ou compartilhar do navegador.
+3. Selecione **"Adicionar à Tela de Início"** (*Add to Home Screen*).
+4. O ícone do app aparecerá na tela inicial e abrirá em tela cheia como um aplicativo.
 
 ---
 
@@ -68,7 +68,7 @@ O aplicativo pode ser acessado diretamente pelo navegador e instalado como aplic
 ### Pré-requisitos
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) instalado
 
-### Executar a versão Web PWA
+### Executar a versão Web
 ```bash
 dotnet run --project ControleVendasLajes.PWA/ControleVendasLajes.PWA.csproj
 ```
@@ -90,4 +90,4 @@ dotnet test ControleVendasLajes.Tests/ControleVendasLajes.Tests.csproj
 ## 👤 Autor
 
 Desenvolvido por **Wesley Godoi**  
-Versão 1.0 • Offline First
+Versão 1.0
