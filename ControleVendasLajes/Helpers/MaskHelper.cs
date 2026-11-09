@@ -35,7 +35,7 @@ public static class MaskHelper
         if (decimal.TryParse(digits, out var cents))
         {
             numericValue = cents / 100m;
-            return numericValue.ToString("C2", PtBr);
+            return $"R$ {numericValue.ToString("N2", PtBr)}";
         }
 
         numericValue = 0m;
@@ -50,7 +50,7 @@ public static class MaskHelper
         if (value <= 0)
             return string.Empty;
 
-        return value.ToString("C2", PtBr);
+        return $"R$ {value.ToString("N2", PtBr)}";
     }
 
     /// <summary>

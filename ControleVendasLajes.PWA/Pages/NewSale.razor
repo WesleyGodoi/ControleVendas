@@ -1,32 +1,33 @@
 @page "/nova-venda"
+@page "/editar-venda/{EditSaleId:int}"
 @inject StorageDatabaseService Db
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <div class="page-container">
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <a href="" class="btn btn-sm btn-outline-secondary rounded-circle">←</a>
-        <h2 class="h5 fw-bold mb-0 text-dark">Novo Orçamento / Venda</h2>
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <a href="@(IsEditing ? $"venda/{EditSaleId}" : "")" class="btn btn-sm btn-outline-secondary rounded-circle py-0 px-2">←</a>
+        <h2 class="h6 fw-bold mb-0 text-dark">@(IsEditing ? $"Editar Venda #{EditSaleId}" : "Novo Orçamento / Venda")</h2>
     </div>
 
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
-        <div class="alert alert-danger py-2 px-3 mb-3">
+        <div class="alert alert-danger py-1 px-2 small mb-2">
             @ErrorMessage
         </div>
     }
 
-    <div class="card-app p-4">
+    <div class="card-app p-3">
         <!-- 1. Seleção do Cliente -->
-        <div class="mb-3">
+        <div class="mb-2">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <label class="form-label fw-bold small text-dark mb-0">CLIENTE *</label>
-                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" @onclick="() => ShowNewClientModal = true">
+                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 small" @onclick="() => ShowNewClientModal = true">
                     + Cadastrar Novo
                 </button>
             </div>
-            <select class="form-select" @onchange="OnClientSelected">
-                <option value="0">-- Selecione um cliente existente --</option>
+            <select class="form-select" value="@(SelectedClient?.Id ?? 0)" @onchange="OnClientSelected">
+                <option value="0">-- Selecione um cliente --</option>
                 @foreach (var c in Clients)
                 {
                     <option value="@c.Id">@c.Name (@(string.IsNullOrEmpty(c.Phone) ? "Sem tel" : c.Phone))</option>
@@ -36,33 +37,34 @@
 
         @if (SelectedClient != null)
         {
-            <div class="bg-light p-2 rounded-3 mb-3 small border">
-                <div><strong>Telefone:</strong> @(string.IsNullOrEmpty(SelectedClient.Phone) ? "Não informado" : SelectedClient.Phone)</div>
+            <div class="bg-light p-2 rounded-2 mb-2 small border text-muted">
+                <div><strong>Tel:</strong> @(string.IsNullOrEmpty(SelectedClient.Phone) ? "Não informado" : SelectedClient.Phone)</div>
                 <div><strong>Entrega:</strong> @(string.IsNullOrEmpty(SelectedClient.DeliveryAddress) ? (SelectedClient.Street + ", " + SelectedClient.City) : SelectedClient.DeliveryAddress)</div>
             </div>
         }
 
         <!-- 2. Itens / Múltiplos Produtos na mesma venda -->
-        <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label fw-bold small text-dark mb-0">ITENS / PRODUTOS DA LAJE *</label>
-                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" @onclick="AddItem">
-                    + Adicionar Outro Produto
+        <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold small text-dark mb-0">ITENS / PRODUTOS *</label>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0 fw-semibold" @onclick="AddItem">
+                    + Adicionar Item
                 </button>
             </div>
 
-            <div class="d-flex flex-column gap-3 mb-3">
+            <div class="d-flex flex-column gap-2 mb-2">
                 @for (int i = 0; i < SaleItems.Count; i++)
                 {
                     var index = i;
                     var item = SaleItems[index];
 
-                    <div class="p-3 rounded-3 border bg-light">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-secondary">Item @(index + 1)</span>
+                    <div class="p-2 rounded-2 border bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-secondary" style="font-size: 10px;">Item @(index + 1)</span>
                             @if (SaleItems.Count > 1)
                             {
                                 <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0"
+                                        style="font-size: 11px;"
                                         @onclick="() => RemoveItem(index)">
                                     🗑️ Remover
                                 </button>
@@ -70,11 +72,10 @@
                         </div>
 
                         <!-- Seleção do Modelo -->
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold text-muted mb-1">Modelo de Laje *</label>
+                        <div class="mb-1">
                             <select class="form-select form-select-sm" value="@item.ProductId"
                                     @onchange="(e) => OnItemProductChanged(index, e)">
-                                <option value="0">-- Selecione o modelo --</option>
+                                <option value="0">-- Modelo de Laje --</option>
                                 @foreach (var p in Products)
                                 {
                                     <option value="@p.Id">@p.Name (R$ @p.DefaultPricePerSqm.ToString("N2")/m²)</option>
@@ -83,62 +84,62 @@
                         </div>
 
                         <!-- Metragem e Preço/m² -->
-                        <div class="row g-2 mb-2">
+                        <div class="row g-1 mb-1">
                             <div class="col-6">
-                                <label class="form-label small fw-semibold text-muted mb-1">Metragem (m²) *</label>
+                                <label class="form-label small text-muted mb-0" style="font-size: 11px;">Metragem (m²)</label>
                                 <input type="number" step="0.1" min="0.1" class="form-control form-control-sm"
-                                       @bind="item.AreaSqm" @bind:after="RecalculateTotals" placeholder="Ex: 50.0" />
+                                       @bind="item.AreaSqm" @bind:after="RecalculateTotals" placeholder="0.0" />
                             </div>
                             <div class="col-6">
-                                <label class="form-label small fw-semibold text-muted mb-1">Preço / m² (R$) *</label>
+                                <label class="form-label small text-muted mb-0" style="font-size: 11px;">Preço / m² (R$)</label>
                                 <input type="number" step="0.50" min="0" class="form-control form-control-sm"
                                        @bind="item.UnitPriceSqm" @bind:after="RecalculateTotals" placeholder="0.00" />
                             </div>
                         </div>
 
                         <!-- Local ou observação do item -->
-                        <div class="mb-2">
+                        <div class="mb-1">
                             <input type="text" class="form-control form-control-sm"
-                                   @bind="item.Notes" placeholder="Local / Referência (ex: Garagem, Pavimento Superior)" />
+                                   @bind="item.Notes" placeholder="Local / Referência (ex: Garagem, Pavimento)" />
                         </div>
 
                         <!-- Subtotal do Item -->
-                        <div class="text-end small pt-1 border-top">
+                        <div class="text-end small pt-1 border-top" style="font-size: 11.5px;">
                             <span class="text-muted">Subtotal: </span>
-                            <span class="fw-bold text-success">@item.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                            <span class="fw-bold text-success">@item.TotalAmount.ToMoney()</span>
                         </div>
                     </div>
                 }
             </div>
 
             <!-- Botão Adicionar Item extra -->
-            <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-2 border-dashed fw-semibold" @onclick="AddItem">
-                ➕ Adicionar Mais um Tipo de Laje a esta Venda
+            <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-1 fw-semibold" style="font-size: 12px;" @onclick="AddItem">
+                ➕ Adicionar Mais uma Laje nesta Venda
             </button>
         </div>
 
         <!-- 3. Totais Consolidados em Destaque -->
-        <div class="p-3 rounded-3 mb-3 bg-light border text-center">
-            <div class="d-flex justify-content-around">
+        <div class="p-2 rounded-2 mb-2 bg-light border text-center">
+            <div class="d-flex justify-content-around align-items-center">
                 <div>
-                    <span class="text-muted small fw-semibold d-block">METRAGEM TOTAL</span>
-                    <h4 class="fw-bold text-dark mt-1 mb-0">@TotalAreaSqm.ToString("N1") <small class="fs-6 fw-normal">m²</small></h4>
+                    <span class="text-muted small fw-semibold d-block" style="font-size: 11px;">METRAGEM TOTAL</span>
+                    <span class="fw-bold text-dark fs-6">@TotalAreaSqm.ToString("N1") m²</span>
                 </div>
                 <div class="border-start ps-3">
-                    <span class="text-muted small fw-semibold d-block">VALOR TOTAL GERAL</span>
-                    <h3 class="fw-bold text-success mt-1 mb-0">@TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</h3>
+                    <span class="text-muted small fw-semibold d-block" style="font-size: 11px;">VALOR TOTAL GERAL</span>
+                    <span class="fw-bold text-success fs-5">@TotalAmount.ToMoney()</span>
                 </div>
             </div>
         </div>
 
         <!-- 4. Data e Status -->
-        <div class="row g-2 mb-3">
+        <div class="row g-2 mb-2">
             <div class="col-6">
-                <label class="form-label fw-bold small text-dark">DATA</label>
+                <label class="form-label fw-bold small text-dark mb-0">DATA</label>
                 <input type="date" class="form-control" @bind="SaleDate" />
             </div>
             <div class="col-6">
-                <label class="form-label fw-bold small text-dark">STATUS</label>
+                <label class="form-label fw-bold small text-dark mb-0">STATUS</label>
                 <select class="form-select" @bind="Status">
                     <option value="@SaleStatus.Orcamento">Orçamento</option>
                     <option value="@SaleStatus.Fechado">Fechado</option>
@@ -147,22 +148,22 @@
         </div>
 
         <!-- 5. Endereço de Entrega da Obra -->
-        <div class="mb-4">
-            <label class="form-label fw-bold small text-dark">ENDEREÇO DA OBRA / ENTREGA</label>
-            <input type="text" class="form-control" @bind="DeliveryAddress" placeholder="Rua, número, bairro ou ponto de referência" />
+        <div class="mb-3">
+            <label class="form-label fw-bold small text-dark mb-0">ENDEREÇO DA OBRA / ENTREGA</label>
+            <input type="text" class="form-control" @bind="DeliveryAddress" placeholder="Rua, número, bairro ou referência" />
         </div>
 
         <!-- Botão Salvar -->
         <div class="d-grid gap-2">
-            <button class="btn btn-primary py-3 fw-bold" @onclick="SaveSaleAsync" disabled="@IsSaving">
+            <button class="btn btn-primary py-2 fw-bold" @onclick="SaveSaleAsync" disabled="@IsSaving">
                 @if (IsSaving)
                 {
-                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span class="spinner-border spinner-border-sm me-1"></span>
                     <span>Salvando...</span>
                 }
                 else
                 {
-                    <span>💾 Salvar Orçamento / Venda</span>
+                    <span>💾 @(IsEditing ? "Salvar Alterações" : "Salvar Orçamento / Venda")</span>
                 }
             </button>
         </div>
@@ -175,27 +176,27 @@
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Novo Cliente Rápido</h5>
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold">Novo Cliente Rápido</h6>
                     <button type="button" class="btn-close" @onclick="() => ShowNewClientModal = false"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body py-2">
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nome Completo *</label>
+                        <label class="form-label small fw-semibold mb-0">Nome Completo *</label>
                         <input type="text" class="form-control" @bind="NewClientName" placeholder="Nome do cliente" />
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Telefone / WhatsApp</label>
+                        <label class="form-label small fw-semibold mb-0">Telefone / WhatsApp</label>
                         <input type="text" class="form-control" @bind="NewClientPhone" placeholder="(00) 00000-0000" />
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Endereço da Obra</label>
+                        <label class="form-label small fw-semibold mb-0">Endereço da Obra</label>
                         <input type="text" class="form-control" @bind="NewClientAddress" placeholder="Rua, número, bairro" />
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => ShowNewClientModal = false">Cancelar</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveQuickClientAsync">Cadastrar e Selecionar</button>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" @onclick="() => ShowNewClientModal = false">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-primary" @onclick="SaveQuickClientAsync">Cadastrar e Selecionar</button>
                 </div>
             </div>
         </div>
@@ -203,6 +204,10 @@
 }
 
 @code {
+    [Parameter] public int? EditSaleId { get; set; }
+
+    private bool IsEditing => EditSaleId.HasValue && EditSaleId.Value > 0;
+
     private List<Client> Clients = new();
     private List<Product> Products = new();
 
@@ -230,8 +235,40 @@
         Clients = await Db.GetClientsAsync();
         Products = await Db.GetProductsAsync();
 
-        // Inicializa com 1 item em branco
-        AddItem();
+        if (IsEditing)
+        {
+            var existing = await Db.GetSaleByIdAsync(EditSaleId!.Value);
+            if (existing != null)
+            {
+                SelectedClient = Clients.FirstOrDefault(c => c.Id == existing.ClientId);
+                SaleDate = existing.SaleDate;
+                Status = existing.Status;
+                DeliveryAddress = existing.DeliveryAddress;
+                SaleItems = existing.Items != null && existing.Items.Count > 0
+                    ? existing.Items.Select(i => new SaleItem
+                    {
+                        Id = i.Id,
+                        SaleId = i.SaleId,
+                        ProductId = i.ProductId,
+                        ProductName = i.ProductName,
+                        AreaSqm = i.AreaSqm,
+                        UnitPriceSqm = i.UnitPriceSqm,
+                        TotalAmount = i.TotalAmount,
+                        Notes = i.Notes
+                    }).ToList()
+                    : new List<SaleItem>();
+
+                if (SaleItems.Count == 0) AddItem();
+            }
+            else
+            {
+                AddItem();
+            }
+        }
+        else
+        {
+            AddItem();
+        }
     }
 
     private void AddItem()
@@ -288,7 +325,7 @@
         if (int.TryParse(e.Value?.ToString(), out var id) && id > 0)
         {
             SelectedClient = Clients.FirstOrDefault(c => c.Id == id);
-            if (SelectedClient != null)
+            if (SelectedClient != null && string.IsNullOrEmpty(DeliveryAddress))
             {
                 DeliveryAddress = !string.IsNullOrEmpty(SelectedClient.DeliveryAddress)
                     ? SelectedClient.DeliveryAddress
@@ -313,7 +350,7 @@
 
         if (SaleItems.Count == 0 || SaleItems.Any(i => i.ProductId == 0 || i.AreaSqm <= 0 || i.UnitPriceSqm <= 0))
         {
-            ErrorMessage = "Verifique os itens da venda: cada item precisa ter o modelo de laje, metragem e preço definidos.";
+            ErrorMessage = "Verifique os itens: cada laje precisa ter o modelo, metragem e preço definidos.";
             return;
         }
 
@@ -321,6 +358,7 @@
 
         var sale = new Sale
         {
+            Id = IsEditing ? EditSaleId!.Value : 0,
             ClientId = SelectedClient.Id,
             ClientName = SelectedClient.Name,
             ClientPhone = SelectedClient.Phone,
@@ -332,10 +370,23 @@
             Items = SaleItems
         };
 
-        var newId = await Db.SaveSaleAsync(sale);
+        if (IsEditing)
+        {
+            var oldSale = await Db.GetSaleByIdAsync(EditSaleId!.Value);
+            if (oldSale != null)
+            {
+                sale.DeliveryStatus = oldSale.DeliveryStatus;
+                sale.DeliveryDate = oldSale.DeliveryDate;
+                sale.PaymentStatus = oldSale.PaymentStatus;
+                sale.PaymentDate = oldSale.PaymentDate;
+                sale.TotalPaid = oldSale.TotalPaid;
+            }
+        }
+
+        var savedId = await Db.SaveSaleAsync(sale);
         IsSaving = false;
 
-        Nav.NavigateTo($"venda/{newId}");
+        Nav.NavigateTo($"venda/{savedId}");
     }
 
     private async Task SaveQuickClientAsync()

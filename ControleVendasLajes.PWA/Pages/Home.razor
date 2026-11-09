@@ -4,90 +4,89 @@
 
 <div class="page-container">
     <!-- Header com Mês/Ano e Atualizar -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
-            <h2 class="h5 fw-bold mb-0 text-dark">Painel de Vendas</h2>
-            <small class="text-muted">Resumo de @CurrentDate.ToString("MMMM/yyyy", new System.Globalization.CultureInfo("pt-BR"))</small>
+            <h2 class="h6 fw-bold mb-0 text-dark">Painel de Vendas</h2>
+            <small class="text-muted" style="font-size: 11px;">@CurrentDate.ToString("MMMM/yyyy", new System.Globalization.CultureInfo("pt-BR"))</small>
         </div>
-        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="LoadDashboardAsync">
+        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" @onclick="LoadDashboardAsync">
             🔄 Atualizar
         </button>
     </div>
 
     @if (IsLoading)
     {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="text-muted mt-2">Carregando dados...</p>
+        <div class="text-center py-4">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <p class="text-muted mt-2 small">Carregando dados...</p>
         </div>
     }
     else
     {
-        <!-- Grid de Cards do Dashboard -->
-        <div class="row g-3 mb-4">
+        <!-- Grid de Cards do Dashboard - Compacto -->
+        <div class="row g-2 mb-3">
             <div class="col-6">
-                <div class="card-app card-stat p-3">
-                    <span class="text-muted small fw-semibold">ÁREA VENDIDA</span>
-                    <h3 class="h4 fw-bold mt-1 mb-0 text-primary">@Summary.TotalSqmSold.ToString("N1") <small class="fs-6 fw-normal">m²</small></h3>
+                <div class="card-app card-stat p-2 mb-0">
+                    <span class="text-muted small fw-semibold" style="font-size: 10px;">ÁREA VENDIDA</span>
+                    <div class="fw-bold mt-0 text-primary fs-6">@Summary.TotalSqmSold.ToString("N1") <small class="text-muted" style="font-size: 11px;">m²</small></div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card-app card-stat-success p-3">
-                    <span class="text-muted small fw-semibold">FATURAMENTO</span>
-                    <h3 class="h4 fw-bold mt-1 mb-0 text-success">@Summary.TotalRevenue.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</h3>
+                <div class="card-app card-stat-success p-2 mb-0">
+                    <span class="text-muted small fw-semibold" style="font-size: 10px;">FATURAMENTO</span>
+                    <div class="fw-bold mt-0 text-success fs-6">@Summary.TotalRevenue.ToMoney()</div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card-app card-stat-warning p-3">
-                    <span class="text-muted small fw-semibold">ENTREGAS PENDENTES</span>
-                    <h3 class="h4 fw-bold mt-1 mb-0 text-warning">@Summary.PendingDeliveriesCount</h3>
+                <div class="card-app card-stat-warning p-2 mb-0">
+                    <span class="text-muted small fw-semibold" style="font-size: 10px;">ENTREGAS PENDENTES</span>
+                    <div class="fw-bold mt-0 text-warning fs-6">@Summary.PendingDeliveriesCount</div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card-app card-stat-danger p-3">
-                    <span class="text-muted small fw-semibold">PAGAMENTOS PEND.</span>
-                    <h3 class="h4 fw-bold mt-1 mb-0 text-danger">@Summary.PendingPaymentsCount</h3>
+                <div class="card-app card-stat-danger p-2 mb-0">
+                    <span class="text-muted small fw-semibold" style="font-size: 10px;">PAGAMENTOS PEND.</span>
+                    <div class="fw-bold mt-0 text-danger fs-6">@Summary.PendingPaymentsCount</div>
                 </div>
             </div>
         </div>
 
-        <!-- Ações Rápidas -->
-        <div class="d-grid gap-2 mb-4">
-            <a href="nova-venda" class="btn btn-primary py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm">
-                <span class="fs-5">➕</span>
-                <span>Nova Venda / Orçamento</span>
+        <!-- Ação Rápida Compacta -->
+        <div class="d-grid gap-2 mb-3">
+            <a href="nova-venda" class="btn btn-primary py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm">
+                <span>➕ Nova Venda / Orçamento</span>
             </a>
         </div>
 
         <!-- Últimos Orçamentos / Vendas -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h3 class="h6 fw-bold mb-0 text-dark">Últimas Vendas & Orçamentos</h3>
-            <a href="vendas" class="text-primary text-decoration-none small fw-semibold">Ver todas →</a>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <h3 class="small fw-bold mb-0 text-dark">Últimos Pedidos</h3>
+            <a href="vendas" class="text-primary text-decoration-none small fw-semibold" style="font-size: 11px;">Ver todas →</a>
         </div>
 
         @if (RecentSales.Count == 0)
         {
-            <div class="card-app text-center py-4 text-muted">
-                <p class="mb-2">Nenhuma venda registrada ainda.</p>
-                <a href="nova-venda" class="btn btn-sm btn-outline-primary">Criar primeiro orçamento</a>
+            <div class="card-app text-center py-3 text-muted small">
+                <p class="mb-1">Nenhuma venda registrada ainda.</p>
+                <a href="nova-venda" class="btn btn-sm btn-outline-primary py-0">Criar orçamento</a>
             </div>
         }
         else
         {
-            <div class="d-flex flex-column gap-2">
+            <div class="d-flex flex-column gap-1">
                 @foreach (var sale in RecentSales)
                 {
-                    <div class="card-app p-3 mb-0" style="cursor: pointer;" @onclick="() => OpenSale(sale.Id)">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <span class="fw-bold text-dark">@sale.ClientName</span>
+                    <div class="card-app p-2 mb-0" style="cursor: pointer;" @onclick="() => OpenSale(sale.Id)">
+                        <div class="d-flex justify-content-between align-items-start mb-0">
+                            <span class="fw-bold text-dark small">@sale.ClientName</span>
                             <span class="badge-app @GetStatusBadgeClass(sale.Status)">@sale.StatusText</span>
                         </div>
-                        <div class="text-muted small mb-2">
+                        <div class="text-muted small mb-1" style="font-size: 11px;">
                             <span>@sale.ProductName</span> • <span>@sale.AreaSqm.ToString("N1") m²</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                            <span class="text-muted small">@sale.SaleDate.ToString("dd/MM/yyyy")</span>
-                            <span class="fw-bold text-dark">@sale.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                        <div class="d-flex justify-content-between align-items-center pt-1 border-top" style="font-size: 11.5px;">
+                            <span class="text-muted">@sale.SaleDate.ToString("dd/MM/yyyy")</span>
+                            <span class="fw-bold text-success">@sale.TotalAmount.ToMoney()</span>
                         </div>
                     </div>
                 }

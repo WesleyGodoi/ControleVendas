@@ -36,22 +36,22 @@
             <span>Total de @FilteredClients.Count cliente(s)</span>
         </div>
 
-        <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column gap-2">
             @foreach (var client in FilteredClients)
             {
-                <div class="card-app p-3 mb-0">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="card-app p-2 px-3 mb-0">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
                         <div>
-                            <h4 class="h6 fw-bold mb-1 text-dark">@client.Name</h4>
-                            <div class="text-muted small">
+                            <h4 class="h6 fw-bold mb-1 text-dark" style="font-size: 13.5px;">@client.Name</h4>
+                            <div class="text-muted" style="font-size: 11.5px;">
                                 📞 @(string.IsNullOrEmpty(client.Phone) ? "Sem telefone" : client.Phone)
                             </div>
                         </div>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-outline-primary px-2 py-1" @onclick="() => EditClient(client)">
+                            <button class="btn btn-sm btn-outline-primary px-2 py-1" style="font-size: 12px;" @onclick="() => EditClient(client)">
                                 ✏️
                             </button>
-                            <button class="btn btn-sm btn-outline-danger px-2 py-1" @onclick="() => DeleteClientAsync(client.Id)">
+                            <button class="btn btn-sm btn-outline-danger px-2 py-1" style="font-size: 12px;" @onclick="() => DeleteClientAsync(client.Id)">
                                 🗑️
                             </button>
                         </div>
@@ -60,22 +60,22 @@
                     <!-- Endereço -->
                     @if (!string.IsNullOrEmpty(client.DeliveryAddress) || !string.IsNullOrEmpty(client.Street))
                     {
-                        <div class="bg-light p-2 rounded-3 small mb-2 text-secondary">
+                        <div class="bg-light p-2 rounded-2 mb-1 text-secondary" style="font-size: 11.5px;">
                             📍 @(string.IsNullOrEmpty(client.DeliveryAddress) ? $"{client.Street} {client.Number}, {client.Neighborhood} - {client.City}" : client.DeliveryAddress)
                         </div>
                     }
 
                     @if (!string.IsNullOrEmpty(client.Notes))
                     {
-                        <div class="text-muted small fst-italic">
+                        <div class="text-muted fst-italic mb-1" style="font-size: 11px;">
                             Obs: @client.Notes
                         </div>
                     }
 
                     @if (!string.IsNullOrEmpty(client.Phone))
                     {
-                        <div class="pt-2 border-top mt-2 d-flex justify-content-end">
-                            <button class="btn btn-sm btn-outline-success rounded-pill px-3 py-1"
+                        <div class="pt-1 border-top mt-1 d-flex justify-content-end">
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" style="font-size: 11px;"
                                     @onclick="() => OpenWhatsApp(client.Phone, client.Name)">
                                 💬 Iniciar Conversa
                             </button>

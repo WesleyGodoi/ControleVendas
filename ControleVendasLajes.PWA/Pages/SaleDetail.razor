@@ -4,54 +4,59 @@
 @inject IJSRuntime JS
 
 <div class="page-container">
-    <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center justify-content-between mb-2">
         <div class="d-flex align-items-center gap-2">
-            <a href="vendas" class="btn btn-sm btn-outline-secondary rounded-circle">←</a>
-            <h2 class="h5 fw-bold mb-0 text-dark">Detalhes da Venda #@Id</h2>
+            <a href="vendas" class="btn btn-sm btn-outline-secondary rounded-circle py-0 px-2">←</a>
+            <h2 class="h6 fw-bold mb-0 text-dark">Venda #{Id}</h2>
         </div>
-        <button class="btn btn-sm btn-outline-danger" @onclick="ConfirmDeleteSale">
-            🗑️ Excluir
-        </button>
+        <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-primary py-1 px-2" @onclick='() => Nav.NavigateTo($"editar-venda/{Id}")' title="Editar Venda">
+                ✏️ Editar
+            </button>
+            <button class="btn btn-sm btn-outline-danger py-1 px-2" @onclick="ConfirmDeleteSale" title="Excluir Venda">
+                🗑️
+            </button>
+        </div>
     </div>
 
     @if (CurrentSale == null)
     {
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="text-muted mt-2">Carregando detalhes...</p>
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <p class="text-muted mt-2 small">Carregando detalhes...</p>
         </div>
     }
     else
     {
         <!-- 1. Card Principal do Cliente e Laje -->
-        <div class="card-app p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="card-app p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                    <h3 class="h5 fw-bold text-dark mb-1">@CurrentSale.ClientName</h3>
-                    <div class="text-muted small">
-                        <span>📞 @(string.IsNullOrEmpty(CurrentSale.ClientPhone) ? "Sem telefone" : CurrentSale.ClientPhone)</span>
+                    <h3 class="h6 fw-bold text-dark mb-0">@CurrentSale.ClientName</h3>
+                    <div class="text-muted small" style="font-size: 11.5px;">
+                        📞 @(string.IsNullOrEmpty(CurrentSale.ClientPhone) ? "Sem telefone" : CurrentSale.ClientPhone)
                     </div>
                 </div>
-                <span class="badge-app @GetStatusBadgeClass(CurrentSale.Status) fs-6">
+                <span class="badge-app @GetStatusBadgeClass(CurrentSale.Status)">
                     @CurrentSale.StatusText
                 </span>
             </div>
 
             <!-- Dados dos Itens da Laje -->
-            <div class="bg-light p-3 rounded-3 mb-3 border">
-                <span class="text-muted small fw-semibold d-block mb-2">PRODUTOS / ITENS DO PEDIDO:</span>
+            <div class="bg-light p-2 rounded-2 mb-2 border">
+                <span class="text-muted small fw-semibold d-block mb-1" style="font-size: 11px;">PRODUTOS / ITENS:</span>
                 @if (CurrentSale.Items != null && CurrentSale.Items.Count > 0)
                 {
-                    <div class="d-flex flex-column gap-2 mb-2">
+                    <div class="d-flex flex-column gap-1 mb-2">
                         @foreach (var it in CurrentSale.Items)
                         {
-                            <div class="bg-white p-2 rounded-2 border small">
+                            <div class="bg-white p-2 rounded-2 border" style="font-size: 12px;">
                                 <div class="d-flex justify-content-between fw-bold text-dark">
                                     <span>@it.ProductName</span>
-                                    <span class="text-success">@it.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                                    <span class="text-success">@it.TotalAmount.ToMoney()</span>
                                 </div>
-                                <div class="text-muted d-flex justify-content-between">
-                                    <span>@it.AreaSqm.ToString("N1") m² x @it.UnitPriceSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                                <div class="text-muted d-flex justify-content-between" style="font-size: 11px;">
+                                    <span>@it.AreaSqm.ToString("N1") m² x @it.UnitPriceSqm.ToMoney()</span>
                                     @if (!string.IsNullOrEmpty(it.Notes))
                                     {
                                         <span class="fst-italic text-secondary">(@it.Notes)</span>
@@ -61,21 +66,21 @@
                         }
                     </div>
                 }
-                <div class="d-flex justify-content-between pt-2 border-top">
+                <div class="d-flex justify-content-between pt-1 border-top">
                     <div>
-                        <span class="text-muted small d-block">METRAGEM TOTAL</span>
-                        <span class="fw-bold text-dark fs-6">@CurrentSale.AreaSqm.ToString("N1") m²</span>
+                        <span class="text-muted small d-block" style="font-size: 10.5px;">ÁREA TOTAL</span>
+                        <span class="fw-bold text-dark">@CurrentSale.AreaSqm.ToString("N1") m²</span>
                     </div>
                     <div class="text-end">
-                        <span class="text-muted small d-block">VALOR TOTAL GERAL</span>
-                        <span class="fw-bold text-success fs-5">@CurrentSale.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                        <span class="text-muted small d-block" style="font-size: 10.5px;">VALOR TOTAL</span>
+                        <span class="fw-bold text-success fs-6">@CurrentSale.TotalAmount.ToMoney()</span>
                     </div>
                 </div>
             </div>
 
             <!-- Endereço de Entrega -->
-            <div class="mb-3">
-                <span class="text-muted small fw-semibold d-block">ENDEREÇO DA OBRA / ENTREGA:</span>
+            <div class="mb-2" style="font-size: 12px;">
+                <span class="text-muted fw-semibold">Entrega: </span>
                 <span class="text-dark">@(string.IsNullOrEmpty(CurrentSale.DeliveryAddress) ? "Não informado" : CurrentSale.DeliveryAddress)</span>
             </div>
 
@@ -83,25 +88,25 @@
             <div class="d-flex gap-2">
                 @if (!string.IsNullOrEmpty(CurrentSale.ClientPhone))
                 {
-                    <button class="btn btn-whatsapp flex-grow-1 justify-content-center" @onclick="SendWhatsAppAsync">
+                    <button class="btn btn-whatsapp btn-sm flex-grow-1 justify-content-center" @onclick="SendWhatsAppAsync">
                         <span>💬 Enviar no WhatsApp</span>
                     </button>
                 }
-                <button class="btn btn-outline-secondary" @onclick="ShareNativeAsync" title="Compartilhar">
+                <button class="btn btn-outline-secondary btn-sm px-3" @onclick="ShareNativeAsync" title="Compartilhar">
                     📤
                 </button>
             </div>
         </div>
 
         <!-- 2. Status da Negociação -->
-        <div class="card-app p-4">
-            <h4 class="h6 fw-bold text-dark mb-3">Status da Negociação</h4>
+        <div class="card-app p-3">
+            <h4 class="small fw-bold text-dark mb-2">Status da Negociação</h4>
             <div class="btn-group w-100" role="group">
-                <button type="button" class="btn @(CurrentSale.Status == SaleStatus.Orcamento ? "btn-warning text-dark fw-bold" : "btn-outline-secondary")"
+                <button type="button" class="btn btn-sm @(CurrentSale.Status == SaleStatus.Orcamento ? "btn-warning text-dark fw-bold" : "btn-outline-secondary")"
                         @onclick="() => UpdateNegotiationStatus(SaleStatus.Orcamento)">
                     📝 Orçamento
                 </button>
-                <button type="button" class="btn @(CurrentSale.Status == SaleStatus.Fechado ? "btn-primary fw-bold" : "btn-outline-secondary")"
+                <button type="button" class="btn btn-sm @(CurrentSale.Status == SaleStatus.Fechado ? "btn-primary fw-bold" : "btn-outline-secondary")"
                         @onclick="() => UpdateNegotiationStatus(SaleStatus.Fechado)">
                     🤝 Fechado
                 </button>
@@ -109,15 +114,15 @@
         </div>
 
         <!-- 3. Controle de Entrega -->
-        <div class="card-app p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="h6 fw-bold text-dark mb-0">Controle de Entrega</h4>
+        <div class="card-app p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="small fw-bold text-dark mb-0">Controle de Entrega</h4>
                 <span class="badge-app @GetDeliveryBadgeClass(CurrentSale.DeliveryStatus)">
                     @CurrentSale.DeliveryStatusText
                 </span>
             </div>
 
-            <div class="btn-group w-100 mb-3" role="group">
+            <div class="btn-group w-100" role="group">
                 <button type="button" class="btn btn-sm @(CurrentSale.DeliveryStatus == DeliveryStatus.Pendente ? "btn-danger fw-bold" : "btn-outline-secondary")"
                         @onclick="() => UpdateDeliveryStatus(DeliveryStatus.Pendente)">
                     Pendente
@@ -134,25 +139,25 @@
         </div>
 
         <!-- 4. Controle Financeiro e Pagamentos -->
-        <div class="card-app p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="h6 fw-bold text-dark mb-0">Controle de Pagamentos</h4>
+        <div class="card-app p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="small fw-bold text-dark mb-0">Controle de Pagamentos</h4>
                 <span class="badge-app @GetPaymentBadgeClass(CurrentSale.PaymentStatus)">
                     @CurrentSale.PaymentStatusText
                 </span>
             </div>
 
-            <div class="row g-2 mb-3 text-center">
+            <div class="row g-2 mb-2 text-center">
                 <div class="col-6">
-                    <div class="bg-light p-2 rounded-3 border">
-                        <small class="text-muted d-block">TOTAL PAGO</small>
-                        <span class="fw-bold text-success fs-6">@CurrentSale.TotalPaid.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                    <div class="bg-light p-2 rounded-2 border">
+                        <small class="text-muted d-block" style="font-size: 10.5px;">TOTAL PAGO</small>
+                        <span class="fw-bold text-success">@CurrentSale.TotalPaid.ToMoney()</span>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="bg-light p-2 rounded-3 border">
-                        <small class="text-muted d-block">A RECEBER</small>
-                        <span class="fw-bold text-danger fs-6">@CurrentSale.RemainingAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                    <div class="bg-light p-2 rounded-2 border">
+                        <small class="text-muted d-block" style="font-size: 10.5px;">A RECEBER</small>
+                        <span class="fw-bold text-danger">@CurrentSale.RemainingAmount.ToMoney()</span>
                     </div>
                 </div>
             </div>
@@ -160,20 +165,20 @@
             <!-- Lista de Parcelas Recebidas -->
             @if (Payments.Count > 0)
             {
-                <div class="mb-3">
-                    <span class="text-muted small fw-semibold d-block mb-2">PAGAMENTOS REGISTRADOS:</span>
-                    <div class="d-flex flex-column gap-2">
+                <div class="mb-2">
+                    <span class="text-muted small fw-semibold d-block mb-1" style="font-size: 11px;">PAGAMENTOS RECEBIDOS:</span>
+                    <div class="d-flex flex-column gap-1">
                         @foreach (var p in Payments)
                         {
-                            <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-3 border">
+                            <div class="d-flex justify-content-between align-items-center bg-light p-1 px-2 rounded-2 border" style="font-size: 12px;">
                                 <div>
-                                    <span class="fw-bold text-success">@p.Amount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
-                                    <span class="badge bg-secondary ms-1">@p.PaymentMethod</span>
-                                    <div class="text-muted" style="font-size: 11px;">
+                                    <span class="fw-bold text-success">@p.Amount.ToMoney()</span>
+                                    <span class="badge bg-secondary ms-1" style="font-size: 10px;">@p.PaymentMethod</span>
+                                    <span class="text-muted ms-1" style="font-size: 10.5px;">
                                         @p.PaymentDate.ToString("dd/MM/yyyy") @(string.IsNullOrEmpty(p.Notes) ? "" : $"• {p.Notes}")
-                                    </div>
+                                    </span>
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger py-0 px-2" @onclick="() => DeletePaymentAsync(p.Id)" title="Excluir pagamento">
+                                <button class="btn btn-sm btn-link text-danger p-0 ms-2" @onclick="() => DeletePaymentAsync(p.Id)" title="Excluir pagamento">
                                     ✕
                                 </button>
                             </div>
@@ -183,7 +188,7 @@
             }
 
             <!-- Botão Adicionar Pagamento -->
-            <button class="btn btn-outline-primary w-100 fw-semibold" @onclick="() => ShowAddPaymentModal = true">
+            <button class="btn btn-outline-primary btn-sm w-100 fw-semibold" @onclick="() => ShowAddPaymentModal = true">
                 + Registrar Pagamento / Entrada
             </button>
         </div>
@@ -196,19 +201,19 @@
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Registrar Pagamento</h5>
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold">Registrar Pagamento</h6>
                     <button type="button" class="btn-close" @onclick="() => ShowAddPaymentModal = false"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Valor Recebido (R$) *</label>
-                        <input type="number" step="0.01" class="form-control fs-5 fw-bold text-success" @bind="NewPaymentAmount" />
-                        <small class="text-muted">Saldo devedor restante: @CurrentSale?.RemainingAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</small>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold mb-0">Valor Recebido (R$) *</label>
+                        <input type="number" step="0.01" class="form-control fw-bold text-success" @bind="NewPaymentAmount" />
+                        <small class="text-muted" style="font-size: 11px;">Saldo restante: @CurrentSale?.RemainingAmount.ToMoney()</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Forma de Pagamento</label>
-                        <select class="form-select" @bind="NewPaymentMethod">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold mb-0">Forma de Pagamento</label>
+                        <select class="form-select form-select-sm" @bind="NewPaymentMethod">
                             <option value="PIX">PIX</option>
                             <option value="Dinheiro">Dinheiro</option>
                             <option value="Cartão de Crédito">Cartão de Crédito</option>
@@ -217,14 +222,14 @@
                             <option value="Boleto">Boleto</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Observação / Parcela</label>
-                        <input type="text" class="form-control" @bind="NewPaymentNotes" placeholder="Ex: Entrada 50%, Parcela 1..." />
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold mb-0">Observação / Parcela</label>
+                        <input type="text" class="form-control form-control-sm" @bind="NewPaymentNotes" placeholder="Ex: Entrada 50%, Parcela 1..." />
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="() => ShowAddPaymentModal = false">Cancelar</button>
-                    <button type="button" class="btn btn-success fw-bold" @onclick="SavePaymentAsync">Confirmar Recebimento</button>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" @onclick="() => ShowAddPaymentModal = false">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-success fw-bold" @onclick="SavePaymentAsync">Confirmar Recebimento</button>
                 </div>
             </div>
         </div>
@@ -312,7 +317,6 @@
     private string BuildProposalText()
     {
         if (CurrentSale == null) return string.Empty;
-        var pt = new System.Globalization.CultureInfo("pt-BR");
 
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("🧱 *ORÇAMENTO DE LAJES PRÉ-MOLDADAS*");
@@ -330,17 +334,17 @@
             foreach (var it in CurrentSale.Items)
             {
                 var note = !string.IsNullOrEmpty(it.Notes) ? $" ({it.Notes})" : "";
-                sb.AppendLine($"• {it.ProductName}: {it.AreaSqm:N1} m² x {it.UnitPriceSqm.ToString("C2", pt)} = {it.TotalAmount.ToString("C2", pt)}{note}");
+                sb.AppendLine($"• {it.ProductName}: {it.AreaSqm:N1} m² x {it.UnitPriceSqm.ToMoney()} = {it.TotalAmount.ToMoney()}{note}");
             }
         }
         else
         {
-            sb.AppendLine($"• {CurrentSale.ProductName}: {CurrentSale.AreaSqm:N1} m² x {CurrentSale.UnitPriceSqm.ToString("C2", pt)} = {CurrentSale.TotalAmount.ToString("C2", pt)}");
+            sb.AppendLine($"• {CurrentSale.ProductName}: {CurrentSale.AreaSqm:N1} m² x {CurrentSale.UnitPriceSqm.ToMoney()} = {CurrentSale.TotalAmount.ToMoney()}");
         }
 
         sb.AppendLine("------------------------------------");
         sb.AppendLine($"📐 *METRAGEM TOTAL:* {CurrentSale.AreaSqm:N1} m²");
-        sb.AppendLine($"💰 *VALOR TOTAL:* {CurrentSale.TotalAmount.ToString("C2", pt)}");
+        sb.AppendLine($"💰 *VALOR TOTAL:* {CurrentSale.TotalAmount.ToMoney()}");
         sb.AppendLine("------------------------------------");
         sb.AppendLine($"Emitido em: {CurrentSale.SaleDate:dd/MM/yyyy}");
         sb.AppendLine($"Status: {CurrentSale.StatusText}");

@@ -30,21 +30,21 @@
     }
     else
     {
-        <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column gap-2">
             @foreach (var prod in ProductList)
             {
-                <div class="card-app p-3 mb-0 d-flex justify-content-between align-items-center">
+                <div class="card-app p-2 px-3 mb-0 d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="h6 fw-bold mb-1 text-dark">@prod.Name</h4>
-                        <span class="text-success fw-bold fs-6">
-                            @prod.DefaultPricePerSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR")) <small class="text-muted fs-6 fw-normal">/ m²</small>
+                        <h4 class="h6 fw-bold mb-1 text-dark" style="font-size: 13.5px;">@prod.Name</h4>
+                        <span class="text-success fw-bold" style="font-size: 13.5px;">
+                            @prod.DefaultPricePerSqm.ToMoney() <small class="text-muted fw-normal" style="font-size: 11px;">/ m²</small>
                         </span>
                     </div>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary px-2 py-1" @onclick="() => EditProduct(prod)">
+                        <button class="btn btn-sm btn-outline-primary px-2 py-1" style="font-size: 12px;" @onclick="() => EditProduct(prod)">
                             ✏️
                         </button>
-                        <button class="btn btn-sm btn-outline-danger px-2 py-1" @onclick="() => DeleteProductAsync(prod.Id)">
+                        <button class="btn btn-sm btn-outline-danger px-2 py-1" style="font-size: 12px;" @onclick="() => DeleteProductAsync(prod.Id)">
                             🗑️
                         </button>
                     </div>
