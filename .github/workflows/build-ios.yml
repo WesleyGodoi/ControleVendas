@@ -54,35 +54,9 @@ jobs:
             -p:_SuppressXcodeVersionCheck=true \
             -o publish_ios
 
-      - name: Gerar Pacote Instalador (.IPA)
-        run: |
-          mkdir -p Payload
-          cp -r publish_ios/ControleVendasLajes.app Payload/
-          zip -r ControleVendasLajes-iOS.ipa Payload
-          rm -rf Payload
-
       - name: Publicar Arquivo .IPA para Download
         uses: actions/upload-artifact@v4
         with:
           name: ControleVendasLajes-iPhone-IPA
-          path: ControleVendasLajes-iOS.ipa
-          retention-days: 14
-
-      - name: Compilar Versão para Simulador iOS
-        run: |
-          dotnet publish ControleVendasLajes/ControleVendasLajes.csproj \
-            -f net9.0-ios \
-            -c Release \
-            -p:TargetFrameworks=net9.0-ios \
-            -p:RuntimeIdentifier=iossimulator-arm64 \
-            -p:ValidateXcodeVersion=false \
-            -p:_SuppressXcodeVersionCheck=true \
-            -o publish_simulator
-          cd publish_simulator && zip -r ../ControleVendasLajes-Simulator.zip ControleVendasLajes.app
-
-      - name: Publicar Pacote do Simulador para Download
-        uses: actions/upload-artifact@v4
-        with:
-          name: ControleVendasLajes-Simulator-App
-          path: ControleVendasLajes-Simulator.zip
+          path: publish_ios/*.ipa
           retention-days: 14
