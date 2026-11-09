@@ -1,0 +1,192 @@
+@page "/vendas"
+@inject StorageDatabaseService Db
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 fw-bold mb-0 text-dark">Vendas & Orçamentos</h2>
+        <a href="nova-venda" class="btn btn-sm btn-primary rounded-pill px-3">
+            + Nova Venda
+        </a>
+    </div>
+
+    <!-- Barra de Busca -->
+    <div class="mb-3">
+        <input type="text" class="form-control" placeholder="🔍 Buscar por cliente, laje ou telefone..."
+               @bind="SearchText" @bind:event="oninput" />
+    </div>
+
+    <!-- Filtros de Status em Tabs -->
+    <div class="d-flex gap-2 overflow-auto pb-2 mb-3">
+        <button class="btn btn-sm @(SelectedFilter == "Todos" ? "btn-dark" : "btn-outline-secondary") rounded-pill px-3"
+                @onclick='() => SelectedFilter = "Todos"'>
+            Todos (@AllSales.Count)
+        </button>
+        <button class="btn btn-sm @(SelectedFilter == "Orcamento" ? "btn-warning text-dark" : "btn-outline-secondary") rounded-pill px-3"
+                @onclick='() => SelectedFilter = "Orcamento"'>
+            Orçamentos (@AllSales.Count(s => s.Status == SaleStatus.Orcamento))
+        </button>
+        <button class="btn btn-sm @(SelectedFilter == "Fechado" ? "btn-primary" : "btn-outline-secondary") rounded-pill px-3"
+                @onclick='() => SelectedFilter = "Fechado"'>
+            Fechados (@AllSales.Count(s => s.Status == SaleStatus.Fechado))
+        </button>
+        <button class="btn btn-sm @(SelectedFilter == "PendenteEntrega" ? "btn-danger" : "btn-outline-secondary") rounded-pill px-3"
+                @onclick='() => SelectedFilter = "PendenteEntrega"'>
+            Entrega Pendente (@AllSales.Count(s => s.DeliveryStatus != DeliveryStatus.Entregue))
+        </button>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando vendas...</p>
+        </div>
+    }
+    else if (FilteredSales.Count == 0)
+    {
+        <div class="card-app text-center py-5 text-muted">
+            <p class="mb-2">Nenhuma venda encontrada com os filtros atuais.</p>
+            <a href="nova-venda" class="btn btn-sm btn-outline-primary">Criar Nova Venda</a>
+        </div>
+    }
+    else
+    {
+        <!-- Resumo dos Filtrados -->
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1 text-muted small">
+            <span>Exibindo @FilteredSales.Count registro(s)</span>
+            <span class="fw-bold text-dark">Total: @FilteredSales.Sum(s => s.TotalAmount).ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+        </div>
+
+        <!-- Lista de Cards -->
+        <div class="d-flex flex-column gap-3">
+            @foreach (var sale in FilteredSales)
+            {
+                <div class="card-app p-3 mb-0" style="cursor: pointer;" @onclick="() => OpenSale(sale.Id)">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h4 class="h6 fw-bold mb-0 text-dark">@sale.ClientName</h4>
+                            <span class="text-muted small">@sale.SaleDate.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <span class="badge-app @GetStatusBadgeClass(sale.Status)">@sale.StatusText</span>
+                    </div>
+
+                    <div class="bg-light p-2 rounded-3 mb-2 small">
+                        <div class="text-dark fw-semibold">@sale.ProductName</div>
+                        <div class="text-muted">@sale.AreaSqm.ToString("N1") m² x @sale.UnitPriceSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</div>
+                    </div>
+
+                    <!-- Badges de Entrega e Pagamento -->
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <span class="badge-app @GetDeliveryBadgeClass(sale.DeliveryStatus)">
+                            📦 @sale.DeliveryStatusText
+                        </span>
+                        <span class="badge-app @GetPaymentBadgeClass(sale.PaymentStatus)">
+                            💰 @sale.PaymentStatusText
+                        </span>
+                    </div>
+
+                    <!-- Rodapé do Card com Total e Botão WhatsApp -->
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                        <div>
+                            <span class="text-muted small">Total: </span>
+                            <span class="fw-bold text-success fs-6">@sale.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                        </div>
+
+                        <div class="d-flex gap-2" @onclick:stopPropagation="true">
+                            @if (!string.IsNullOrEmpty(sale.ClientPhone))
+                            {
+                                <button class="btn btn-sm btn-outline-success rounded-pill px-2 py-1" title="Enviar no WhatsApp"
+                                        @onclick="() => SendWhatsApp(sale)">
+                                    💬 WhatsApp
+                                </button>
+                            }
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1"
+                                    @onclick="() => OpenSale(sale.Id)">
+                                Abrir →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Sale> AllSales = new();
+    private string SearchText = string.Empty;
+    private string SelectedFilter = "Todos";
+    private bool IsLoading = true;
+
+    private List<Sale> FilteredSales
+    {
+        get
+        {
+            var result = AllSales.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                result = result.Where(s =>
+                    s.ClientName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.ProductName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.ClientPhone.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            }
+
+            result = SelectedFilter switch
+            {
+                "Orcamento" => result.Where(s => s.Status == SaleStatus.Orcamento),
+                "Fechado" => result.Where(s => s.Status == SaleStatus.Fechado),
+                "PendenteEntrega" => result.Where(s => s.DeliveryStatus != DeliveryStatus.Entregue),
+                _ => result
+            };
+
+            return result.ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSalesAsync();
+    }
+
+    private async Task LoadSalesAsync()
+    {
+        IsLoading = true;
+        AllSales = await Db.GetSalesAsync();
+        IsLoading = false;
+    }
+
+    private void OpenSale(int id)
+    {
+        Nav.NavigateTo($"venda/{id}");
+    }
+
+    private async Task SendWhatsApp(Sale sale)
+    {
+        var msg = $"Olá {sale.ClientName}!\n\nSegue o seu orçamento de lajes:\n🧱 *Produto:* {sale.ProductName}\n📐 *Metragem:* {sale.AreaSqm:N1} m²\n💰 *Valor Total:* {sale.TotalAmount:C2}\n\nFicamos à disposição para fechamento!";
+        await JS.InvokeVoidAsync("openWhatsApp", sale.ClientPhone, msg);
+    }
+
+    private string GetStatusBadgeClass(SaleStatus status) => status switch
+    {
+        SaleStatus.Orcamento => "badge-orcamento",
+        SaleStatus.Fechado => "badge-fechado",
+        _ => "badge-orcamento"
+    };
+
+    private string GetDeliveryBadgeClass(DeliveryStatus status) => status switch
+    {
+        DeliveryStatus.Entregue => "badge-entregue",
+        DeliveryStatus.EmRota => "badge-transporte",
+        _ => "badge-pendente"
+    };
+
+    private string GetPaymentBadgeClass(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pago => "badge-pago",
+        PaymentStatus.Parcial => "badge-parcial",
+        _ => "badge-pendente"
+    };
+}

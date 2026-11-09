@@ -1,0 +1,157 @@
+@page "/produtos"
+@inject StorageDatabaseService Db
+@inject IJSRuntime JS
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 fw-bold mb-0 text-dark">Catálogo de Lajes</h2>
+        <button class="btn btn-sm btn-primary rounded-pill px-3" @onclick="OpenNewProductModal">
+            + Nova Laje
+        </button>
+    </div>
+
+    <div class="alert alert-info py-2 px-3 small mb-3">
+        💡 O preço por metro quadrado cadastrado aqui serve como valor padrão ao abrir um novo orçamento, mas pode ser alterado a qualquer momento em cada venda.
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando modelos de laje...</p>
+        </div>
+    }
+    else if (ProductList.Count == 0)
+    {
+        <div class="card-app text-center py-5 text-muted">
+            <p class="mb-2">Nenhum produto cadastrado.</p>
+            <button class="btn btn-sm btn-outline-primary" @onclick="OpenNewProductModal">Cadastrar Modelo de Laje</button>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var prod in ProductList)
+            {
+                <div class="card-app p-3 mb-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="h6 fw-bold mb-1 text-dark">@prod.Name</h4>
+                        <span class="text-success fw-bold fs-6">
+                            @prod.DefaultPricePerSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR")) <small class="text-muted fs-6 fw-normal">/ m²</small>
+                        </span>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary px-2 py-1" @onclick="() => EditProduct(prod)">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger px-2 py-1" @onclick="() => DeleteProductAsync(prod.Id)">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal Adicionar / Editar Produto -->
+@if (ShowProductModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">@(EditingProduct.Id == 0 ? "Novo Modelo de Laje" : "Editar Laje")</h5>
+                    <button type="button" class="btn-close" @onclick="() => ShowProductModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(ModalError))
+                    {
+                        <div class="alert alert-danger py-1 px-2 small mb-2">@ModalError</div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Descrição do Modelo *</label>
+                        <input type="text" class="form-control" @bind="EditingProduct.Name" placeholder="Ex: Laje Treliçada H8 EPS..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Preço Padrão por m² (R$) *</label>
+                        <input type="number" step="0.50" min="0" class="form-control fs-5 fw-bold text-success" @bind="EditingProduct.DefaultPricePerSqm" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => ShowProductModal = false">Cancelar</button>
+                    <button type="button" class="btn btn-primary fw-semibold" @onclick="SaveProductAsync">Salvar Laje</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Product> ProductList = new();
+    private bool IsLoading = true;
+
+    private bool ShowProductModal = false;
+    private Product EditingProduct = new();
+    private string ModalError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        IsLoading = true;
+        ProductList = await Db.GetProductsAsync();
+        IsLoading = false;
+    }
+
+    private void OpenNewProductModal()
+    {
+        EditingProduct = new Product();
+        ModalError = string.Empty;
+        ShowProductModal = true;
+    }
+
+    private void EditProduct(Product prod)
+    {
+        EditingProduct = new Product
+        {
+            Id = prod.Id,
+            Name = prod.Name,
+            DefaultPricePerSqm = prod.DefaultPricePerSqm
+        };
+        ModalError = string.Empty;
+        ShowProductModal = true;
+    }
+
+    private async Task SaveProductAsync()
+    {
+        if (string.IsNullOrWhiteSpace(EditingProduct.Name))
+        {
+            ModalError = "Informe o nome ou modelo da laje.";
+            return;
+        }
+
+        if (EditingProduct.DefaultPricePerSqm < 0)
+        {
+            ModalError = "O preço não pode ser negativo.";
+            return;
+        }
+
+        await Db.SaveProductAsync(EditingProduct);
+        ShowProductModal = false;
+        await LoadProductsAsync();
+    }
+
+    private async Task DeleteProductAsync(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este modelo de laje?");
+        if (confirmed)
+        {
+            await Db.DeleteProductAsync(id);
+            await LoadProductsAsync();
+        }
+    }
+}

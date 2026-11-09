@@ -1,0 +1,243 @@
+/* Design System - Vendas de Lajes PWA */
+:root {
+    --primary: #0284C7;
+    --primary-dark: #0369A1;
+    --primary-light: #E0F2FE;
+    --surface: #FFFFFF;
+    --background: #F8FAFC;
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+}
+
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* App Header */
+.app-header {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: 12px;
+}
+
+/* Bottom Nav Bar for Mobile / iOS */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #FFFFFF;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding-top: 8px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    flex: 1;
+    padding: 4px 0;
+    transition: color 0.15s ease-in-out;
+}
+
+.bottom-nav-item.active {
+    color: var(--primary);
+}
+
+.bottom-nav-item .icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+/* Page Container */
+.page-container {
+    padding: 16px;
+    padding-bottom: 90px; /* Space for bottom nav */
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Cards */
+.card-app {
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 18px;
+    margin-bottom: 16px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.card-stat {
+    border-left: 4px solid var(--primary);
+}
+
+.card-stat-warning {
+    border-left: 4px solid var(--warning);
+}
+
+.card-stat-success {
+    border-left: 4px solid var(--success);
+}
+
+.card-stat-danger {
+    border-left: 4px solid var(--danger);
+}
+
+/* Inputs & Buttons */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    padding: 10px 14px;
+    font-size: 15px;
+    color: var(--text-main);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 600;
+}
+
+.btn-primary:hover, .btn-primary:active {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.btn-whatsapp {
+    background-color: #25D366;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-whatsapp:hover {
+    background-color: #20BD5A;
+    color: white;
+}
+
+/* Badges */
+.badge-app {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-orcamento {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-fechado {
+    background-color: #E0F2FE;
+    color: #0369A1;
+}
+
+.badge-pago {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-parcial {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-pendente {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.badge-entregue {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-transporte {
+    background-color: #EEF2FF;
+    color: #3730A3;
+}
+
+/* Loading Spinner */
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #e0e0e0;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+.loading-progress circle:last-child {
+    stroke: var(--primary);
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "Carregando...");
+}
+
+#blazor-error-ui {
+    background: #FEF2F2;
+    color: #991B1B;
+    bottom: 0;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+    display: none;
+    left: 0;
+    padding: 0.8rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 2000;
+}

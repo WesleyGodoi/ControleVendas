@@ -1,0 +1,172 @@
+@page "/ajustes"
+@inject StorageDatabaseService Db
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<div class="page-container">
+    <h2 class="h5 fw-bold mb-3 text-dark">Ajustes & Backup</h2>
+
+    <!-- Link para Catálogo de Produtos -->
+    <div class="card-app p-3 mb-3 d-flex justify-content-between align-items-center" style="cursor: pointer;" @onclick='() => Nav.NavigateTo("produtos")'>
+        <div class="d-flex align-items-center gap-3">
+            <span class="fs-4">🧱</span>
+            <div>
+                <h4 class="h6 fw-bold mb-0 text-dark">Tabela de Preços e Lajes</h4>
+                <small class="text-muted">Modelos H8, H12, EPS e valores por m²</small>
+            </div>
+        </div>
+        <span class="text-primary fw-bold">Gerenciar →</span>
+    </div>
+
+    <!-- Estatísticas do Banco Local -->
+    <div class="card-app p-4 mb-3">
+        <h3 class="h6 fw-bold text-dark mb-3">Armazenamento Offline (No Aparelho)</h3>
+
+        @if (Stats == null)
+        {
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        }
+        else
+        {
+            <div class="row g-2 text-center mb-3">
+                <div class="col-6">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <small class="text-muted d-block">CLIENTES</small>
+                        <span class="fw-bold fs-5 text-dark">@Stats.ClientCount</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <small class="text-muted d-block">VENDAS/ORÇ.</small>
+                        <span class="fw-bold fs-5 text-dark">@Stats.SaleCount</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <small class="text-muted d-block">PAGAMENTOS</small>
+                        <span class="fw-bold fs-5 text-dark">@Stats.PaymentCount</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <small class="text-muted d-block">TAMANHO</small>
+                        <span class="fw-bold fs-5 text-dark">@Stats.FormattedSize</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="small text-muted mb-0">
+                <span>Último backup: </span>
+                <span class="fw-semibold text-dark">@(Stats.LastBackupDate.HasValue ? Stats.LastBackupDate.Value.ToString("dd/MM/yyyy HH:mm") : "Nenhum realizado")</span>
+            </div>
+        }
+    </div>
+
+    <!-- Exportar Backup -->
+    <div class="card-app p-4 mb-3">
+        <h3 class="h6 fw-bold text-dark mb-2">Exportar Backup dos Dados</h3>
+        <p class="text-muted small mb-3">
+            Baixe uma cópia de segurança completa de todas as suas vendas, clientes e orçamentos. Você pode guardar no Google Drive, iCloud ou enviar no WhatsApp.
+        </p>
+        <button class="btn btn-outline-primary w-100 py-2 fw-semibold" @onclick="ExportBackupAsync" disabled="@IsExporting">
+            @if (IsExporting)
+            {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                <span>Exportando...</span>
+            }
+            else
+            {
+                <span>📥 Baixar Arquivo de Backup (.json)</span>
+            }
+        </button>
+    </div>
+
+    <!-- Restaurar Backup -->
+    <div class="card-app p-4 mb-4">
+        <h3 class="h6 fw-bold text-dark mb-2">Restaurar Backup</h3>
+        <p class="text-muted small mb-3">
+            Recupere todos os seus dados a partir de um arquivo de backup previamente exportado.
+        </p>
+
+        <InputFile OnChange="OnBackupFileSelected" class="form-control mb-2" accept=".json" />
+
+        @if (!string.IsNullOrEmpty(RestoreMessage))
+        {
+            <div class="alert @(RestoreSuccess ? "alert-success" : "alert-danger") py-2 small">
+                @RestoreMessage
+            </div>
+        }
+    </div>
+
+    <!-- Informações do App -->
+    <div class="text-center text-muted small py-2">
+        <div class="fw-bold text-dark">Controle de Vendas de Lajes v1.0</div>
+        <div>PWA 100% Offline • Funciona no iPhone sem expiração</div>
+        <div class="mt-2 text-secondary">Desenvolvido por <strong>Wesley Godoi</strong></div>
+    </div>
+</div>
+
+@code {
+    private DatabaseStatsDto? Stats;
+    private bool IsExporting = false;
+    private string RestoreMessage = string.Empty;
+    private bool RestoreSuccess = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatsAsync();
+    }
+
+    private async Task LoadStatsAsync()
+    {
+        Stats = await Db.GetDatabaseStatsAsync();
+    }
+
+    private async Task ExportBackupAsync()
+    {
+        IsExporting = true;
+        try
+        {
+            var json = await Db.ExportBackupJsonAsync();
+            var filename = $"Backup_VendasLajes_{DateTime.Now:yyyyMMdd_HHmm}.json";
+            await JS.InvokeVoidAsync("saveAsFile", filename, json);
+            await LoadStatsAsync();
+        }
+        finally
+        {
+            IsExporting = false;
+        }
+    }
+
+    private async Task OnBackupFileSelected(InputFileChangeEventArgs e)
+    {
+        RestoreMessage = string.Empty;
+        var file = e.File;
+        if (file == null) return;
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // max 10MB
+            using var reader = new System.IO.StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+
+            var success = await Db.RestoreBackupJsonAsync(json);
+            if (success)
+            {
+                RestoreSuccess = true;
+                RestoreMessage = "✅ Dados restaurados com sucesso!";
+                await LoadStatsAsync();
+            }
+            else
+            {
+                RestoreSuccess = false;
+                RestoreMessage = "❌ O arquivo selecionado não é um backup válido.";
+            }
+        }
+        catch (Exception ex)
+        {
+            RestoreSuccess = false;
+            RestoreMessage = $"❌ Erro ao ler arquivo: {ex.Message}";
+        }
+    }
+}

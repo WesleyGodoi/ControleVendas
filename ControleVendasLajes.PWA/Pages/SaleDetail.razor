@@ -1,0 +1,353 @@
+@page "/venda/{Id:int}"
+@inject StorageDatabaseService Db
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="page-container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="vendas" class="btn btn-sm btn-outline-secondary rounded-circle">←</a>
+            <h2 class="h5 fw-bold mb-0 text-dark">Detalhes da Venda #@Id</h2>
+        </div>
+        <button class="btn btn-sm btn-outline-danger" @onclick="ConfirmDeleteSale">
+            🗑️ Excluir
+        </button>
+    </div>
+
+    @if (CurrentSale == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando detalhes...</p>
+        </div>
+    }
+    else
+    {
+        <!-- 1. Card Principal do Cliente e Laje -->
+        <div class="card-app p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h3 class="h5 fw-bold text-dark mb-1">@CurrentSale.ClientName</h3>
+                    <div class="text-muted small">
+                        <span>📞 @(string.IsNullOrEmpty(CurrentSale.ClientPhone) ? "Sem telefone" : CurrentSale.ClientPhone)</span>
+                    </div>
+                </div>
+                <span class="badge-app @GetStatusBadgeClass(CurrentSale.Status) fs-6">
+                    @CurrentSale.StatusText
+                </span>
+            </div>
+
+            <!-- Dados da Laje -->
+            <div class="bg-light p-3 rounded-3 mb-3 border">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted small">Modelo de Laje:</span>
+                    <span class="fw-bold text-dark">@CurrentSale.ProductName</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted small">Metragem:</span>
+                    <span class="fw-bold text-dark">@CurrentSale.AreaSqm.ToString("N1") m²</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted small">Preço / m²:</span>
+                    <span class="fw-bold text-dark">@CurrentSale.UnitPriceSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                </div>
+                <div class="d-flex justify-content-between pt-2 border-top">
+                    <span class="fw-bold text-dark">VALOR TOTAL:</span>
+                    <span class="fw-bold text-success fs-5">@CurrentSale.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                </div>
+            </div>
+
+            <!-- Endereço de Entrega -->
+            <div class="mb-3">
+                <span class="text-muted small fw-semibold d-block">ENDEREÇO DA OBRA / ENTREGA:</span>
+                <span class="text-dark">@(string.IsNullOrEmpty(CurrentSale.DeliveryAddress) ? "Não informado" : CurrentSale.DeliveryAddress)</span>
+            </div>
+
+            <!-- Ações WhatsApp e Compartilhar -->
+            <div class="d-flex gap-2">
+                @if (!string.IsNullOrEmpty(CurrentSale.ClientPhone))
+                {
+                    <button class="btn btn-whatsapp flex-grow-1 justify-content-center" @onclick="SendWhatsAppAsync">
+                        <span>💬 Enviar no WhatsApp</span>
+                    </button>
+                }
+                <button class="btn btn-outline-secondary" @onclick="ShareNativeAsync" title="Compartilhar">
+                    📤
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Status da Negociação -->
+        <div class="card-app p-4">
+            <h4 class="h6 fw-bold text-dark mb-3">Status da Negociação</h4>
+            <div class="btn-group w-100" role="group">
+                <button type="button" class="btn @(CurrentSale.Status == SaleStatus.Orcamento ? "btn-warning text-dark fw-bold" : "btn-outline-secondary")"
+                        @onclick="() => UpdateNegotiationStatus(SaleStatus.Orcamento)">
+                    📝 Orçamento
+                </button>
+                <button type="button" class="btn @(CurrentSale.Status == SaleStatus.Fechado ? "btn-primary fw-bold" : "btn-outline-secondary")"
+                        @onclick="() => UpdateNegotiationStatus(SaleStatus.Fechado)">
+                    🤝 Fechado
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Controle de Entrega -->
+        <div class="card-app p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="h6 fw-bold text-dark mb-0">Controle de Entrega</h4>
+                <span class="badge-app @GetDeliveryBadgeClass(CurrentSale.DeliveryStatus)">
+                    @CurrentSale.DeliveryStatusText
+                </span>
+            </div>
+
+            <div class="btn-group w-100 mb-3" role="group">
+                <button type="button" class="btn btn-sm @(CurrentSale.DeliveryStatus == DeliveryStatus.Pendente ? "btn-danger fw-bold" : "btn-outline-secondary")"
+                        @onclick="() => UpdateDeliveryStatus(DeliveryStatus.Pendente)">
+                    Pendente
+                </button>
+                <button type="button" class="btn btn-sm @(CurrentSale.DeliveryStatus == DeliveryStatus.EmRota ? "btn-info text-dark fw-bold" : "btn-outline-secondary")"
+                        @onclick="() => UpdateDeliveryStatus(DeliveryStatus.EmRota)">
+                    Em Transporte
+                </button>
+                <button type="button" class="btn btn-sm @(CurrentSale.DeliveryStatus == DeliveryStatus.Entregue ? "btn-success fw-bold" : "btn-outline-secondary")"
+                        @onclick="() => UpdateDeliveryStatus(DeliveryStatus.Entregue)">
+                    Entregue
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. Controle Financeiro e Pagamentos -->
+        <div class="card-app p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="h6 fw-bold text-dark mb-0">Controle de Pagamentos</h4>
+                <span class="badge-app @GetPaymentBadgeClass(CurrentSale.PaymentStatus)">
+                    @CurrentSale.PaymentStatusText
+                </span>
+            </div>
+
+            <div class="row g-2 mb-3 text-center">
+                <div class="col-6">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <small class="text-muted d-block">TOTAL PAGO</small>
+                        <span class="fw-bold text-success fs-6">@CurrentSale.TotalPaid.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="bg-light p-2 rounded-3 border">
+                        <small class="text-muted d-block">A RECEBER</small>
+                        <span class="fw-bold text-danger fs-6">@CurrentSale.RemainingAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Parcelas Recebidas -->
+            @if (Payments.Count > 0)
+            {
+                <div class="mb-3">
+                    <span class="text-muted small fw-semibold d-block mb-2">PAGAMENTOS REGISTRADOS:</span>
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var p in Payments)
+                        {
+                            <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-3 border">
+                                <div>
+                                    <span class="fw-bold text-success">@p.Amount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                                    <span class="badge bg-secondary ms-1">@p.PaymentMethod</span>
+                                    <div class="text-muted" style="font-size: 11px;">
+                                        @p.PaymentDate.ToString("dd/MM/yyyy") @(string.IsNullOrEmpty(p.Notes) ? "" : $"• {p.Notes}")
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-2" @onclick="() => DeletePaymentAsync(p.Id)" title="Excluir pagamento">
+                                    ✕
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Botão Adicionar Pagamento -->
+            <button class="btn btn-outline-primary w-100 fw-semibold" @onclick="() => ShowAddPaymentModal = true">
+                + Registrar Pagamento / Entrada
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Modal Adicionar Pagamento -->
+@if (ShowAddPaymentModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Registrar Pagamento</h5>
+                    <button type="button" class="btn-close" @onclick="() => ShowAddPaymentModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Valor Recebido (R$) *</label>
+                        <input type="number" step="0.01" class="form-control fs-5 fw-bold text-success" @bind="NewPaymentAmount" />
+                        <small class="text-muted">Saldo devedor restante: @CurrentSale?.RemainingAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Forma de Pagamento</label>
+                        <select class="form-select" @bind="NewPaymentMethod">
+                            <option value="PIX">PIX</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                            <option value="Transferência Bancária">Transferência Bancária</option>
+                            <option value="Boleto">Boleto</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Observação / Parcela</label>
+                        <input type="text" class="form-control" @bind="NewPaymentNotes" placeholder="Ex: Entrada 50%, Parcela 1..." />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => ShowAddPaymentModal = false">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold" @onclick="SavePaymentAsync">Confirmar Recebimento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Sale? CurrentSale;
+    private List<SalePayment> Payments = new();
+
+    // Modal Pagamento
+    private bool ShowAddPaymentModal = false;
+    private decimal NewPaymentAmount = 0;
+    private string NewPaymentMethod = "PIX";
+    private string NewPaymentNotes = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSaleDataAsync();
+    }
+
+    private async Task LoadSaleDataAsync()
+    {
+        CurrentSale = await Db.GetSaleByIdAsync(Id);
+        if (CurrentSale != null)
+        {
+            Payments = await Db.GetPaymentsBySaleIdAsync(Id);
+            NewPaymentAmount = CurrentSale.RemainingAmount > 0 ? CurrentSale.RemainingAmount : 0;
+        }
+    }
+
+    private async Task UpdateNegotiationStatus(SaleStatus newStatus)
+    {
+        if (CurrentSale == null) return;
+        CurrentSale.Status = newStatus;
+        await Db.SaveSaleAsync(CurrentSale);
+    }
+
+    private async Task UpdateDeliveryStatus(DeliveryStatus newStatus)
+    {
+        if (CurrentSale == null) return;
+        CurrentSale.DeliveryStatus = newStatus;
+        if (newStatus == DeliveryStatus.Entregue) CurrentSale.DeliveryDate = DateTime.Now;
+        await Db.SaveSaleAsync(CurrentSale);
+    }
+
+    private async Task SavePaymentAsync()
+    {
+        if (CurrentSale == null || NewPaymentAmount <= 0) return;
+
+        var payment = new SalePayment
+        {
+            SaleId = CurrentSale.Id,
+            Amount = NewPaymentAmount,
+            PaymentDate = DateTime.Now,
+            PaymentMethod = NewPaymentMethod,
+            Notes = NewPaymentNotes
+        };
+
+        await Db.AddPaymentAsync(payment);
+        ShowAddPaymentModal = false;
+        NewPaymentNotes = string.Empty;
+        await LoadSaleDataAsync();
+    }
+
+    private async Task DeletePaymentAsync(int paymentId)
+    {
+        if (CurrentSale == null) return;
+        await Db.DeletePaymentAsync(paymentId, CurrentSale.Id);
+        await LoadSaleDataAsync();
+    }
+
+    private async Task ConfirmDeleteSale()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir esta venda/orçamento?");
+        if (confirmed)
+        {
+            await Db.DeleteSaleAsync(Id);
+            Nav.NavigateTo("vendas");
+        }
+    }
+
+    private string BuildProposalText()
+    {
+        if (CurrentSale == null) return string.Empty;
+        var pt = new System.Globalization.CultureInfo("pt-BR");
+        return $"🧱 *ORÇAMENTO DE LAJES PRÉ-MOLDADAS*\n" +
+               $"------------------------------------\n" +
+               $"👤 *Cliente:* {CurrentSale.ClientName}\n" +
+               $"📍 *Entrega:* {CurrentSale.DeliveryAddress}\n" +
+               $"📦 *Modelo:* {CurrentSale.ProductName}\n" +
+               $"📐 *Metragem:* {CurrentSale.AreaSqm:N1} m²\n" +
+               $"💲 *Preço / m²:* {CurrentSale.UnitPriceSqm.ToString("C2", pt)}\n" +
+               $"💰 *VALOR TOTAL:* {CurrentSale.TotalAmount.ToString("C2", pt)}\n" +
+               $"------------------------------------\n" +
+               $"Emitido em: {CurrentSale.SaleDate:dd/MM/yyyy}\n" +
+               $"Status: {CurrentSale.StatusText}\n\n" +
+               $"*Desenvolvido por Wesley Godoi*";
+    }
+
+    private async Task SendWhatsAppAsync()
+    {
+        if (CurrentSale == null) return;
+        var text = BuildProposalText();
+        await JS.InvokeVoidAsync("openWhatsApp", CurrentSale.ClientPhone, text);
+    }
+
+    private async Task ShareNativeAsync()
+    {
+        if (CurrentSale == null) return;
+        var text = BuildProposalText();
+        var shared = await JS.InvokeAsync<bool>("shareNative", $"Orçamento - {CurrentSale.ClientName}", text);
+        if (!shared)
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            await JS.InvokeVoidAsync("alert", "Texto do orçamento copiado para a área de transferência!");
+        }
+    }
+
+    private string GetStatusBadgeClass(SaleStatus status) => status switch
+    {
+        SaleStatus.Orcamento => "badge-orcamento",
+        SaleStatus.Fechado => "badge-fechado",
+        _ => "badge-orcamento"
+    };
+
+    private string GetDeliveryBadgeClass(DeliveryStatus status) => status switch
+    {
+        DeliveryStatus.Entregue => "badge-entregue",
+        DeliveryStatus.EmRota => "badge-transporte",
+        _ => "badge-pendente"
+    };
+
+    private string GetPaymentBadgeClass(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pago => "badge-pago",
+        PaymentStatus.Parcial => "badge-parcial",
+        _ => "badge-pendente"
+    };
+}

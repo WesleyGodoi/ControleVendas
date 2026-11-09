@@ -1,0 +1,233 @@
+@page "/clientes"
+@inject StorageDatabaseService Db
+@inject IJSRuntime JS
+
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 fw-bold mb-0 text-dark">Cadastro de Clientes</h2>
+        <button class="btn btn-sm btn-primary rounded-pill px-3" @onclick="OpenNewClientModal">
+            + Novo Cliente
+        </button>
+    </div>
+
+    <!-- Campo de Busca -->
+    <div class="mb-3">
+        <input type="text" class="form-control" placeholder="🔍 Buscar cliente por nome, telefone ou cidade..."
+               @bind="SearchText" @bind:event="oninput" />
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2">Carregando clientes...</p>
+        </div>
+    }
+    else if (FilteredClients.Count == 0)
+    {
+        <div class="card-app text-center py-5 text-muted">
+            <p class="mb-2">Nenhum cliente cadastrado ou encontrado.</p>
+            <button class="btn btn-sm btn-outline-primary" @onclick="OpenNewClientModal">Cadastrar Primeiro Cliente</button>
+        </div>
+    }
+    else
+    {
+        <div class="mb-2 text-muted small px-1">
+            <span>Total de @FilteredClients.Count cliente(s)</span>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+            @foreach (var client in FilteredClients)
+            {
+                <div class="card-app p-3 mb-0">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h4 class="h6 fw-bold mb-1 text-dark">@client.Name</h4>
+                            <div class="text-muted small">
+                                📞 @(string.IsNullOrEmpty(client.Phone) ? "Sem telefone" : client.Phone)
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary px-2 py-1" @onclick="() => EditClient(client)">
+                                ✏️
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger px-2 py-1" @onclick="() => DeleteClientAsync(client.Id)">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Endereço -->
+                    @if (!string.IsNullOrEmpty(client.DeliveryAddress) || !string.IsNullOrEmpty(client.Street))
+                    {
+                        <div class="bg-light p-2 rounded-3 small mb-2 text-secondary">
+                            📍 @(string.IsNullOrEmpty(client.DeliveryAddress) ? $"{client.Street} {client.Number}, {client.Neighborhood} - {client.City}" : client.DeliveryAddress)
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(client.Notes))
+                    {
+                        <div class="text-muted small fst-italic">
+                            Obs: @client.Notes
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(client.Phone))
+                    {
+                        <div class="pt-2 border-top mt-2 d-flex justify-content-end">
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3 py-1"
+                                    @onclick="() => OpenWhatsApp(client.Phone, client.Name)">
+                                💬 Iniciar Conversa
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal Adicionar / Editar Cliente -->
+@if (ShowClientModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">@(EditingClient.Id == 0 ? "Novo Cliente" : "Editar Cliente")</h5>
+                    <button type="button" class="btn-close" @onclick="() => ShowClientModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(ModalError))
+                    {
+                        <div class="alert alert-danger py-1 px-2 small mb-2">@ModalError</div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Nome Completo *</label>
+                        <input type="text" class="form-control" @bind="EditingClient.Name" placeholder="Nome do cliente" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Telefone / WhatsApp</label>
+                        <input type="text" class="form-control" @bind="EditingClient.Phone" @bind:after="ApplyPhoneMask" placeholder="(00) 00000-0000" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Endereço Principal / Obra</label>
+                        <input type="text" class="form-control" @bind="EditingClient.DeliveryAddress" placeholder="Rua, número, bairro ou referência" />
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label class="form-label small fw-semibold">Bairro</label>
+                            <input type="text" class="form-control" @bind="EditingClient.Neighborhood" placeholder="Bairro" />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Cidade</label>
+                            <input type="text" class="form-control" @bind="EditingClient.City" placeholder="Cidade" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Observações</label>
+                        <textarea class="form-control" rows="2" @bind="EditingClient.Notes" placeholder="Informações adicionais..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => ShowClientModal = false">Cancelar</button>
+                    <button type="button" class="btn btn-primary fw-semibold" @onclick="SaveClientAsync">Salvar Cliente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Client> AllClients = new();
+    private string SearchText = string.Empty;
+    private bool IsLoading = true;
+
+    private bool ShowClientModal = false;
+    private Client EditingClient = new();
+    private string ModalError = string.Empty;
+
+    private List<Client> FilteredClients
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SearchText)) return AllClients;
+            return AllClients.Where(c =>
+                c.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                c.Phone.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                c.City.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                c.Neighborhood.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClientsAsync();
+    }
+
+    private async Task LoadClientsAsync()
+    {
+        IsLoading = true;
+        AllClients = await Db.GetClientsAsync();
+        IsLoading = false;
+    }
+
+    private void OpenNewClientModal()
+    {
+        EditingClient = new Client();
+        ModalError = string.Empty;
+        ShowClientModal = true;
+    }
+
+    private void EditClient(Client client)
+    {
+        EditingClient = new Client
+        {
+            Id = client.Id,
+            Name = client.Name,
+            Phone = client.Phone,
+            Street = client.Street,
+            Number = client.Number,
+            Neighborhood = client.Neighborhood,
+            City = client.City,
+            Notes = client.Notes,
+            DeliveryAddress = client.DeliveryAddress
+        };
+        ModalError = string.Empty;
+        ShowClientModal = true;
+    }
+
+    private void ApplyPhoneMask()
+    {
+        EditingClient.Phone = MaskHelper.ApplyPhoneMask(EditingClient.Phone);
+    }
+
+    private async Task SaveClientAsync()
+    {
+        if (string.IsNullOrWhiteSpace(EditingClient.Name))
+        {
+            ModalError = "O nome do cliente é obrigatório.";
+            return;
+        }
+
+        await Db.SaveClientAsync(EditingClient);
+        ShowClientModal = false;
+        await LoadClientsAsync();
+    }
+
+    private async Task DeleteClientAsync(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este cliente?");
+        if (confirmed)
+        {
+            await Db.DeleteClientAsync(id);
+            await LoadClientsAsync();
+        }
+    }
+
+    private async Task OpenWhatsApp(string phone, string name)
+    {
+        var msg = $"Olá {name}! Tudo bem? Entrando em contato sobre seu orçamento de lajes.";
+        await JS.InvokeVoidAsync("openWhatsApp", phone, msg);
+    }
+}

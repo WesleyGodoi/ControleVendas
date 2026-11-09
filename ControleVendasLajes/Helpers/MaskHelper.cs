@@ -106,6 +106,25 @@ public static class MaskHelper
     }
 
     /// <summary>
+    /// Formata número de telefone brasileiro no padrão (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+    /// </summary>
+    public static string ApplyPhoneMask(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+
+        var digits = Regex.Replace(input, @"\D", "");
+        if (digits.Length > 11) digits = digits[..11];
+
+        return digits.Length switch
+        {
+            <= 2 => digits.Length > 0 ? $"({digits}" : string.Empty,
+            <= 6 => $"({digits[..2]}) {digits[2..]}",
+            <= 10 => $"({digits[..2]}) {digits[2..6]}-{digits[6..]}",
+            _ => $"({digits[..2]}) {digits[2..7]}-{digits[7..]}"
+        };
+    }
+
+    /// <summary>
     /// Converte um double existente de área diretamente para string (ex: 125,50)
     /// </summary>
     public static string FormatArea(double value)

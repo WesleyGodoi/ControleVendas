@@ -1,0 +1,300 @@
+@page "/nova-venda"
+@inject StorageDatabaseService Db
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="page-container">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a href="" class="btn btn-sm btn-outline-secondary rounded-circle">←</a>
+        <h2 class="h5 fw-bold mb-0 text-dark">Novo Orçamento / Venda</h2>
+    </div>
+
+    @if (ShowSuccessAlert)
+    {
+        <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-3">
+            <span>✅ Venda salva com sucesso!</span>
+            <button class="btn-close" @onclick="() => ShowSuccessAlert = false"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger py-2 px-3 mb-3">
+            @ErrorMessage
+        </div>
+    }
+
+    <div class="card-app p-4">
+        <!-- 1. Seleção do Cliente -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold small text-dark mb-0">CLIENTE *</label>
+                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" @onclick="() => ShowNewClientModal = true">
+                    + Cadastrar Novo
+                </button>
+            </div>
+            <select class="form-select" @onchange="OnClientSelected">
+                <option value="0">-- Selecione um cliente existente --</option>
+                @foreach (var c in Clients)
+                {
+                    <option value="@c.Id">@c.Name (@(string.IsNullOrEmpty(c.Phone) ? "Sem tel" : c.Phone))</option>
+                }
+            </select>
+        </div>
+
+        @if (SelectedClient != null)
+        {
+            <div class="bg-light p-2 rounded-3 mb-3 small border">
+                <div><strong>Telefone:</strong> @(string.IsNullOrEmpty(SelectedClient.Phone) ? "Não informado" : SelectedClient.Phone)</div>
+                <div><strong>Entrega:</strong> @(string.IsNullOrEmpty(SelectedClient.DeliveryAddress) ? (SelectedClient.Street + ", " + SelectedClient.City) : SelectedClient.DeliveryAddress)</div>
+            </div>
+        }
+
+        <!-- 2. Seleção do Tipo de Laje -->
+        <div class="mb-3">
+            <label class="form-label fw-bold small text-dark">TIPO DE LAJE *</label>
+            <select class="form-select" @onchange="OnProductSelected">
+                <option value="0">-- Selecione o modelo de laje --</option>
+                @foreach (var p in Products)
+                {
+                    <option value="@p.Id">@p.Name (R$ @p.DefaultPricePerSqm.ToString("N2")/m²)</option>
+                }
+            </select>
+        </div>
+
+        <!-- 3. Metragem (m²) e Preço por m² -->
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <label class="form-label fw-bold small text-dark">METRAGEM (m²) *</label>
+                <input type="number" step="0.1" min="0.1" class="form-control" @bind="AreaSqm" @bind:after="RecalculateTotal" placeholder="Ex: 50.0" />
+            </div>
+            <div class="col-6">
+                <label class="form-label fw-bold small text-dark">PREÇO / m² (R$) *</label>
+                <input type="number" step="0.50" min="0" class="form-control" @bind="UnitPriceSqm" @bind:after="RecalculateTotal" placeholder="0.00" />
+            </div>
+        </div>
+
+        <!-- 4. Total Calculado em Destaque -->
+        <div class="p-3 rounded-3 mb-3 bg-light border text-center">
+            <span class="text-muted small fw-semibold">VALOR TOTAL DA LAJE</span>
+            <h3 class="fw-bold text-success mt-1 mb-0">@TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</h3>
+        </div>
+
+        <!-- 5. Data e Status -->
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <label class="form-label fw-bold small text-dark">DATA</label>
+                <input type="date" class="form-control" @bind="SaleDate" />
+            </div>
+            <div class="col-6">
+                <label class="form-label fw-bold small text-dark">STATUS</label>
+                <select class="form-select" @bind="Status">
+                    <option value="@SaleStatus.Orcamento">Orçamento</option>
+                    <option value="@SaleStatus.Fechado">Fechado</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 6. Endereço de Entrega da Obra -->
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-dark">ENDEREÇO DA OBRA / ENTREGA</label>
+            <input type="text" class="form-control" @bind="DeliveryAddress" placeholder="Rua, número, bairro ou ponto de referência" />
+        </div>
+
+        <!-- Botão Salvar -->
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary py-3 fw-bold" @onclick="SaveSaleAsync" disabled="@IsSaving">
+                @if (IsSaving)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span>Salvando...</span>
+                }
+                else
+                {
+                    <span>💾 Salvar Orçamento / Venda</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rápido de Novo Cliente -->
+@if (ShowNewClientModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Novo Cliente Rápido</h5>
+                    <button type="button" class="btn-close" @onclick="() => ShowNewClientModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Nome Completo *</label>
+                        <input type="text" class="form-control" @bind="NewClientName" placeholder="Nome do cliente" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Telefone / WhatsApp</label>
+                        <input type="text" class="form-control" @bind="NewClientPhone" placeholder="(00) 00000-0000" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Endereço da Obra</label>
+                        <input type="text" class="form-control" @bind="NewClientAddress" placeholder="Rua, número, bairro" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => ShowNewClientModal = false">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveQuickClientAsync">Cadastrar e Selecionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Client> Clients = new();
+    private List<Product> Products = new();
+
+    private Client? SelectedClient;
+    private Product? SelectedProduct;
+
+    private double AreaSqm = 0;
+    private decimal UnitPriceSqm = 0;
+    private decimal TotalAmount = 0;
+    private DateTime SaleDate = DateTime.Now;
+    private SaleStatus Status = SaleStatus.Orcamento;
+    private string DeliveryAddress = string.Empty;
+
+    private bool IsSaving = false;
+    private bool ShowSuccessAlert = false;
+    private string ErrorMessage = string.Empty;
+
+    // Modal de Novo Cliente
+    private bool ShowNewClientModal = false;
+    private string NewClientName = string.Empty;
+    private string NewClientPhone = string.Empty;
+    private string NewClientAddress = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Clients = await Db.GetClientsAsync();
+        Products = await Db.GetProductsAsync();
+    }
+
+    private void OnClientSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id) && id > 0)
+        {
+            SelectedClient = Clients.FirstOrDefault(c => c.Id == id);
+            if (SelectedClient != null)
+            {
+                DeliveryAddress = !string.IsNullOrEmpty(SelectedClient.DeliveryAddress)
+                    ? SelectedClient.DeliveryAddress
+                    : $"{SelectedClient.Street} {SelectedClient.Number}, {SelectedClient.Neighborhood} - {SelectedClient.City}".Trim(' ', ',');
+            }
+        }
+        else
+        {
+            SelectedClient = null;
+        }
+    }
+
+    private void OnProductSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id) && id > 0)
+        {
+            SelectedProduct = Products.FirstOrDefault(p => p.Id == id);
+            if (SelectedProduct != null && UnitPriceSqm == 0)
+            {
+                UnitPriceSqm = SelectedProduct.DefaultPricePerSqm;
+                RecalculateTotal();
+            }
+        }
+        else
+        {
+            SelectedProduct = null;
+        }
+    }
+
+    private void RecalculateTotal()
+    {
+        TotalAmount = Math.Round((decimal)AreaSqm * UnitPriceSqm, 2);
+    }
+
+    private async Task SaveSaleAsync()
+    {
+        ErrorMessage = string.Empty;
+
+        if (SelectedClient == null)
+        {
+            ErrorMessage = "Selecione ou cadastre um cliente antes de salvar.";
+            return;
+        }
+
+        if (SelectedProduct == null)
+        {
+            ErrorMessage = "Selecione o modelo de laje.";
+            return;
+        }
+
+        if (AreaSqm <= 0)
+        {
+            ErrorMessage = "Informe a metragem (m²) da laje.";
+            return;
+        }
+
+        if (UnitPriceSqm <= 0)
+        {
+            ErrorMessage = "Informe o preço unitário por m².";
+            return;
+        }
+
+        IsSaving = true;
+
+        var sale = new Sale
+        {
+            ClientId = SelectedClient.Id,
+            ClientName = SelectedClient.Name,
+            ClientPhone = SelectedClient.Phone,
+            ProductId = SelectedProduct.Id,
+            ProductName = SelectedProduct.Name,
+            AreaSqm = AreaSqm,
+            UnitPriceSqm = UnitPriceSqm,
+            TotalAmount = TotalAmount,
+            SaleDate = SaleDate,
+            Status = Status,
+            DeliveryStatus = DeliveryStatus.Pendente,
+            PaymentStatus = PaymentStatus.Pendente,
+            DeliveryAddress = DeliveryAddress
+        };
+
+        var newId = await Db.SaveSaleAsync(sale);
+        IsSaving = false;
+
+        Nav.NavigateTo($"venda/{newId}");
+    }
+
+    private async Task SaveQuickClientAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewClientName)) return;
+
+        var client = new Client
+        {
+            Name = NewClientName.Trim(),
+            Phone = MaskHelper.ApplyPhoneMask(NewClientPhone),
+            DeliveryAddress = NewClientAddress.Trim()
+        };
+
+        var id = await Db.SaveClientAsync(client);
+        client.Id = id;
+
+        Clients = await Db.GetClientsAsync();
+        SelectedClient = client;
+        DeliveryAddress = client.DeliveryAddress;
+        ShowNewClientModal = false;
+
+        NewClientName = string.Empty;
+        NewClientPhone = string.Empty;
+        NewClientAddress = string.Empty;
+    }
+}
