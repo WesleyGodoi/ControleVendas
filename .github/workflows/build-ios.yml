@@ -40,13 +40,14 @@ jobs:
         run: dotnet workload install maui-ios
 
       - name: Restaurar Dependências
-        run: dotnet restore ControleVendasLajes/ControleVendasLajes.csproj
+        run: dotnet restore ControleVendasLajes/ControleVendasLajes.csproj -p:TargetFrameworks=net9.0-ios
 
       - name: Compilar App para iPhone físico (arm64)
         run: |
           dotnet publish ControleVendasLajes/ControleVendasLajes.csproj \
             -f net9.0-ios \
             -c Release \
+            -p:TargetFrameworks=net9.0-ios \
             -p:RuntimeIdentifier=ios-arm64 \
             -p:EnableCodeSigning=false \
             -o publish_ios
@@ -70,6 +71,7 @@ jobs:
           dotnet publish ControleVendasLajes/ControleVendasLajes.csproj \
             -f net9.0-ios \
             -c Release \
+            -p:TargetFrameworks=net9.0-ios \
             -p:RuntimeIdentifier=iossimulator-arm64 \
             -o publish_simulator
           cd publish_simulator && zip -r ../ControleVendasLajes-Simulator.zip ControleVendasLajes.app
