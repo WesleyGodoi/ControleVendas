@@ -1,92 +1,89 @@
-# 🏗️ Controle de Vendas de Lajes Pré-Moldadas
+# 🏗️ Controle de Vendas
 
-Aplicativo **Offline-First** multiplataforma (.NET MAUI 9 / C#) projetado para o gerenciamento comercial completo de vendas de lajes pré-moldadas, clientes, entregas e fluxo de recebimentos financeiros.
+Sistema comercial **Offline-First** completo para gestão de vendas e orçamentos de lajes pré-moldadas, clientes, entregas e fluxo de recebimentos financeiros.
+
+O projeto conta com uma versão **Web PWA (Progressive Web App)** moderna que roda 100% offline em qualquer smartphone (iPhone e Android) e computador, além da versão nativa para desktop Windows (.NET 9).
 
 ---
 
 ## 📱 Tecnologias Utilizadas
 
-- **Framework:** .NET MAUI 9 (Multi-platform App UI)
-- **Linguagem:** C# 13 / .NET 9
-- **Arquitetura:** MVVM (Model-View-ViewModel) com `CommunityToolkit.Mvvm`
-- **Banco de Dados Local:** SQLite (`sqlite-net-pcl`) com cache compartilhado e suporte a migrações automáticas
-- **Plataformas Alvo:** Windows Machine (Desktop WinUI 3 Unpackaged), iOS (iPhone/iPad) e Android
-- **Testes Automatizados:** xUnit com 31 testes de unidade cobrindo máscaras, filtros e integridade de backup
+- **Web App (PWA):** Blazor WebAssembly (.NET 9 C#) com Service Worker e cache offline
+- **Desktop (Windows):** .NET MAUI 9 (WinUI 3 Unpackaged)
+- **Biblioteca Compartilhada:** `ControleVendasLajes.Core` (.NET 9)
+- **Armazenamento Offline:** LocalStorage / IndexedDB (Web) e SQLite nativo (Desktop)
+- **Hospedagem & CI/CD:** GitHub Actions com deploy automático no **GitHub Pages**
+- **Testes Automatizados:** xUnit com 31 testes de unidade cobrindo cálculos, regras de negócio e validações
 
 ---
 
 ## ✨ Principais Funcionalidades
 
 1. **Dashboard Operacional e Financeiro:**
-   - Métricas em tempo real do mês atual: Total de m² vendidos e Receita efetivamente recebida.
-   - Alertas rápidos de entregas pendentes na obra e pagamentos pendentes/parciais.
+   - Métricas em tempo real do mês atual: Área total vendida (m²), Faturamento recebido, Entregas pendentes na obra e Pagamentos pendentes/parciais.
    - Listagem dos pedidos recentes com duplo status visual (Entrega e Pagamento).
-   - Recarregamento com 1 clique (botão no Windows e gesto pull-to-refresh em dispositivos móveis).
+   - Botão de atualização rápida em tempo real.
 
-2. **Gestão de Vendas & Histórico Financeiro Parcelado:**
-   - Criação de novos pedidos com busca rápida de cliente e seleção de tipos de laje pré-moldada.
-   - Cálculo automático de valor total em tempo real com base na área (m²) e valor unitário.
-   - **Recebimento Parcial e Quitação:** Registro de pagamentos parciais no histórico com data, forma de pagamento (PIX, Dinheiro, Cartão, Boleto, Cheque) e observações, até a quitação total do pedido.
-   - Painel de filtros avançado (busca por cliente, status de entrega, status de pagamento e intervalo de datas).
+2. **Gestão de Vendas & Orçamentos:**
+   - Criação ágil de orçamentos com busca rápida de cliente e seleção de tipos de laje pré-moldada.
+   - Cálculo automático de valor total em tempo real com base na área (m²) e no preço unitário por m².
+   - **Envio Direto no WhatsApp:** Botão com 1 clique para formatar a proposta comercial completa e abrir a conversa do cliente no WhatsApp.
+   - Compartilhamento nativo da proposta comercial.
 
-3. **Catálogo de Tipos de Laje:**
-   - Cadastro e edição de produtos com preço padrão por m² (ex: Laje Treliçada c/ EPS H8, H12, Cerâmica, Painel Maciço).
+3. **Controle Financeiro e Parcelamento:**
+   - Registro de pagamentos e entradas com data, método de recebimento (PIX, Dinheiro, Cartão, Transferência, Boleto) e observações.
+   - Cálculo automático do saldo devedor restante e atualização do status (Pendente, Parcial ou Quitado).
 
-4. **Gestão de Clientes:**
-   - Cadastro completo com telefone, endereço de entrega detalhado (rua, número, bairro, cidade) e observações para entrega na obra.
+4. **Controle de Entregas:**
+   - Gerenciamento independente do status da entrega (Pendente, Em Transporte ou Entregue na Obra).
 
-5. **Backup & Restauração Segura:**
-   - **Exportar Backup:** Gera cópias de segurança consolidadas do banco de dados SQLite com data e hora. Salva automaticamente na pasta Downloads (Windows) e integra com o compartilhamento nativo (`Share`).
-   - **Restaurar Backup:** Importação de arquivos de backup prévios com validação prévia de integridade e rollback de segurança em caso de falha.
-   - Painel com resumo dos registros e tamanho da base em disco.
+5. **Catálogo de Tipos de Laje e Preços:**
+   - Cadastro e edição de produtos com preço padrão por m² (ex: Laje Treliçada c/ EPS H8, H12, Cerâmica H8/H12, EPS H16).
 
-6. **Interface Moderna e Alto Contraste:**
-   - Menu lateral (gaveta / flyout) elegante com navegação intuitiva.
-   - Máscaras brasileiras automáticas de moeda (`R$ 0,00`) e área (`m²`).
-   - Ícone personalizado e tela de carregamento animada ao iniciar o aplicativo.
+6. **Gestão de Clientes:**
+   - Cadastro completo com nome, telefone com máscara automática `(XX) XXXXX-XXXX`, endereço de entrega detalhado (rua, número, bairro, cidade) e observações da obra.
+
+7. **Backup e Restauração Segura:**
+   - **Exportar Backup:** Baixa um arquivo `.json` consolidado com todos os dados salvos para você guardar no Google Drive, iCloud ou enviar por e-mail/WhatsApp.
+   - **Restaurar Backup:** Importa arquivos de backup anteriores com validação de integridade.
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 🌐 Como Acessar e Usar o PWA (iPhone / Android / Web)
+
+O aplicativo pode ser acessado diretamente pelo navegador e instalado como aplicativo nativo em qualquer celular:
+
+👉 **Link de Acesso:** [https://wesleygodoi.github.io/ControleVendas/](https://wesleygodoi.github.io/ControleVendas/)
+
+### Como Instalar no iPhone (Safari):
+1. Abra o link acima no **Safari** do iPhone.
+2. Toque no botão de **Compartilhar** (ícone quadrado com uma seta apontando para cima).
+3. Role para baixo e selecione **"Adicionar à Tela de Início"** (*Add to Home Screen*).
+4. O ícone do app aparecerá na tela inicial do iPhone e funcionará como um aplicativo nativo, **100% offline e sem validade de expiração**.
+
+---
+
+## 💻 Como Executar Localmente
 
 ### Pré-requisitos
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) instalado
-- Carga de trabalho .NET MAUI: `dotnet workload install maui`
 
-### Execução no Windows Desktop (Rápida)
-Execute o script utilitário na raiz do projeto:
+### Executar a versão Web PWA
+```bash
+dotnet run --project ControleVendasLajes.PWA/ControleVendasLajes.PWA.csproj
+```
+Abra o navegador no endereço exibido (ex: `http://localhost:5000`).
+
+### Executar a versão Windows Desktop
+Execute o script utilitário:
 ```bat
 Compilar_e_Executar.bat
 ```
 
-Ou execute via CLI:
+### Executar os Testes de Unidade
 ```bash
-dotnet build ControleVendasLajes\ControleVendasLajes.csproj -f net9.0-windows10.0.19041.0
-dotnet run --project ControleVendasLajes\ControleVendasLajes.csproj -f net9.0-windows10.0.19041.0
+dotnet test ControleVendasLajes.Tests/ControleVendasLajes.Tests.csproj
 ```
-
-### Executar Testes Automatizados
-```bash
-dotnet test ControleVendasLajes.Tests\ControleVendasLajes.Tests.csproj
-```
-
----
-
-## 🍏 Versão para Testes no iPhone (iOS)
-
-O repositório conta com uma pipeline automatizada no **GitHub Actions** (`.github/workflows/build-ios.yml`) que compila o aplicativo em máquinas macOS na nuvem:
-
-1. **Como baixar a versão de testes:**
-   - Acesse a aba **[Actions](https://github.com/WesleyGodoi/ControleVendasLaje/actions)** no repositório.
-   - Clique na execução mais recente do workflow **"Build iOS (iPhone / iPad)"**.
-   - No rodapé da página (seção **Artifacts**), baixe o arquivo **`ControleVendasLajes-iPhone-IPA`** (ou `ControleVendasLajes-Simulator-App`).
-
-2. **Como instalar no seu iPhone físico:**
-   - Use um instalador gratuito como o [Sideloadly](https://sideloadly.io/) ou [AltStore](https://altstore.io/):
-     1. Conecte seu iPhone ao computador via cabo ou Wi-Fi.
-     2. Abra o Sideloadly e arraste o arquivo `.ipa` baixado.
-     3. Insira o seu Apple ID para assinar gratuitamente o app de testes.
-     4. Clique em **Start** e o app aparecerá na tela inicial do seu iPhone!
 
 ---
 
