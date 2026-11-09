@@ -1,6 +1,6 @@
 {
-  "name": "Controle de Vendas de Lajes",
-  "short_name": "Vendas Lajes",
+  "name": "Controle de Vendas",
+  "short_name": "Controle Vendas",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
