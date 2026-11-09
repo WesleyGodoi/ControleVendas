@@ -12,11 +12,13 @@ public class StorageDatabaseService
     private List<Client> _clients = new();
     private List<Product> _products = new();
     private List<Sale> _sales = new();
+    private List<SaleItem> _items = new();
     private List<SalePayment> _payments = new();
 
     private const string KeyClients = "cvl_clients";
     private const string KeyProducts = "cvl_products";
     private const string KeySales = "cvl_sales";
+    private const string KeyItems = "cvl_sale_items";
     private const string KeyPayments = "cvl_payments";
     private const string KeyLastBackup = "cvl_last_backup";
 
@@ -34,6 +36,7 @@ public class StorageDatabaseService
             _clients = await LoadListAsync<Client>(KeyClients);
             _products = await LoadListAsync<Product>(KeyProducts);
             _sales = await LoadListAsync<Sale>(KeySales);
+            _items = await LoadListAsync<SaleItem>(KeyItems);
             _payments = await LoadListAsync<SalePayment>(KeyPayments);
 
             // Seed default products if empty
@@ -137,18 +140,68 @@ public class StorageDatabaseService
     public async Task<List<Sale>> GetSalesAsync()
     {
         await InitializeAsync();
+        foreach (var sale in _sales)
+        {
+            PopulateSaleItems(sale);
+        }
         return _sales.OrderByDescending(s => s.SaleDate).ToList();
     }
 
     public async Task<Sale?> GetSaleByIdAsync(int id)
     {
         await InitializeAsync();
-        return _sales.FirstOrDefault(s => s.Id == id);
+        var sale = _sales.FirstOrDefault(s => s.Id == id);
+        if (sale != null)
+        {
+            PopulateSaleItems(sale);
+        }
+        return sale;
+    }
+
+    private void PopulateSaleItems(Sale sale)
+    {
+        var items = _items.Where(i => i.SaleId == sale.Id).OrderBy(i => i.Id).ToList();
+        if (items.Count == 0 && sale.AreaSqm > 0)
+        {
+            // Fallback para vendas criadas antes de suportar múltiplos itens
+            sale.Items = new List<SaleItem>
+            {
+                new()
+                {
+                    Id = 1,
+                    SaleId = sale.Id,
+                    ProductId = sale.ProductId,
+                    ProductName = sale.ProductName,
+                    AreaSqm = sale.AreaSqm,
+                    UnitPriceSqm = sale.UnitPriceSqm,
+                    TotalAmount = sale.TotalAmount
+                }
+            };
+        }
+        else
+        {
+            sale.Items = items;
+        }
     }
 
     public async Task<int> SaveSaleAsync(Sale sale)
     {
         await InitializeAsync();
+
+        // Se houver itens na venda, atualiza os totais consolidados
+        if (sale.Items != null && sale.Items.Count > 0)
+        {
+            sale.AreaSqm = sale.Items.Sum(i => i.AreaSqm);
+            sale.TotalAmount = sale.Items.Sum(i => i.TotalAmount);
+            sale.UnitPriceSqm = sale.AreaSqm > 0 ? Math.Round(sale.TotalAmount / (decimal)sale.AreaSqm, 2) : 0;
+            sale.ProductId = sale.Items[0].ProductId;
+            sale.ProductName = sale.Items.Count switch
+            {
+                1 => sale.Items[0].ProductName,
+                _ => $"{sale.Items[0].ProductName} (+{sale.Items.Count - 1} itens)"
+            };
+        }
+
         if (sale.Id == 0)
         {
             sale.Id = _sales.Count > 0 ? _sales.Max(s => s.Id) + 1 : 1;
@@ -161,7 +214,21 @@ public class StorageDatabaseService
             else _sales.Add(sale);
         }
 
+        // Salva os itens vinculados a esta venda
+        _items.RemoveAll(i => i.SaleId == sale.Id);
+        if (sale.Items != null && sale.Items.Count > 0)
+        {
+            int nextItemId = _items.Count > 0 ? _items.Max(i => i.Id) + 1 : 1;
+            foreach (var it in sale.Items)
+            {
+                it.Id = nextItemId++;
+                it.SaleId = sale.Id;
+                _items.Add(it);
+            }
+        }
+
         await SaveListAsync(KeySales, _sales);
+        await SaveListAsync(KeyItems, _items);
         return sale.Id;
     }
 
@@ -169,10 +236,12 @@ public class StorageDatabaseService
     {
         await InitializeAsync();
         var removed = _sales.RemoveAll(s => s.Id == id) > 0;
+        _items.RemoveAll(i => i.SaleId == id);
         _payments.RemoveAll(p => p.SaleId == id);
         if (removed)
         {
             await SaveListAsync(KeySales, _sales);
+            await SaveListAsync(KeyItems, _items);
             await SaveListAsync(KeyPayments, _payments);
         }
         return removed;
@@ -289,11 +358,12 @@ public class StorageDatabaseService
         await InitializeAsync();
         var backup = new BackupContainer
         {
-            Version = 1,
+            Version = 2,
             ExportedAt = DateTime.Now,
             Clients = _clients,
             Products = _products,
             Sales = _sales,
+            Items = _items,
             Payments = _payments
         };
 
@@ -313,11 +383,13 @@ public class StorageDatabaseService
             _clients = backup.Clients ?? new();
             _products = backup.Products ?? new();
             _sales = backup.Sales ?? new();
+            _items = backup.Items ?? new();
             _payments = backup.Payments ?? new();
 
             await SaveListAsync(KeyClients, _clients);
             await SaveListAsync(KeyProducts, _products);
             await SaveListAsync(KeySales, _sales);
+            await SaveListAsync(KeyItems, _items);
             await SaveListAsync(KeyPayments, _payments);
 
             await _js.InvokeVoidAsync("localStorage.setItem", KeyLastBackup, DateTime.Now.ToString("o"));
@@ -353,11 +425,12 @@ public class StorageDatabaseService
 
     private class BackupContainer
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
         public DateTime ExportedAt { get; set; }
         public List<Client>? Clients { get; set; }
         public List<Product>? Products { get; set; }
         public List<Sale>? Sales { get; set; }
+        public List<SaleItem>? Items { get; set; }
         public List<SalePayment>? Payments { get; set; }
     }
 }

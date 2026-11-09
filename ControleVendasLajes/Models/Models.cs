@@ -85,6 +85,30 @@ public class SalePayment
     public string Notes { get; set; } = string.Empty; // Observação (ex: Entrada 50%, Parcela 1)
 }
 
+[Table("SaleItems")]
+public class SaleItem
+{
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+
+    [Indexed]
+    public int SaleId { get; set; }
+
+    public int ProductId { get; set; }
+
+    [MaxLength(120)]
+    public string ProductName { get; set; } = string.Empty;
+
+    public double AreaSqm { get; set; }
+
+    public decimal UnitPriceSqm { get; set; }
+
+    public decimal TotalAmount { get; set; }
+
+    [MaxLength(100)]
+    public string Notes { get; set; } = string.Empty; // ex: Garagem, Piso Superior, etc.
+}
+
 [Table("Sales")]
 public class Sale
 {
@@ -105,6 +129,10 @@ public class Sale
     public double AreaSqm { get; set; }
     public decimal UnitPriceSqm { get; set; }
     public decimal TotalAmount { get; set; }
+
+    // Lista de múltiplos itens/produtos na mesma venda
+    [Ignore]
+    public List<SaleItem> Items { get; set; } = new();
 
     // Saldo recebido acumulado
     public decimal TotalPaid { get; set; }

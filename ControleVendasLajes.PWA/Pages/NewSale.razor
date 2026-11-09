@@ -9,14 +9,6 @@
         <h2 class="h5 fw-bold mb-0 text-dark">Novo Orçamento / Venda</h2>
     </div>
 
-    @if (ShowSuccessAlert)
-    {
-        <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 mb-3">
-            <span>✅ Venda salva com sucesso!</span>
-            <button class="btn-close" @onclick="() => ShowSuccessAlert = false"></button>
-        </div>
-    }
-
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
         <div class="alert alert-danger py-2 px-3 mb-3">
@@ -50,37 +42,96 @@
             </div>
         }
 
-        <!-- 2. Seleção do Tipo de Laje -->
+        <!-- 2. Itens / Múltiplos Produtos na mesma venda -->
         <div class="mb-3">
-            <label class="form-label fw-bold small text-dark">TIPO DE LAJE *</label>
-            <select class="form-select" @onchange="OnProductSelected">
-                <option value="0">-- Selecione o modelo de laje --</option>
-                @foreach (var p in Products)
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-bold small text-dark mb-0">ITENS / PRODUTOS DA LAJE *</label>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" @onclick="AddItem">
+                    + Adicionar Outro Produto
+                </button>
+            </div>
+
+            <div class="d-flex flex-column gap-3 mb-3">
+                @for (int i = 0; i < SaleItems.Count; i++)
                 {
-                    <option value="@p.Id">@p.Name (R$ @p.DefaultPricePerSqm.ToString("N2")/m²)</option>
+                    var index = i;
+                    var item = SaleItems[index];
+
+                    <div class="p-3 rounded-3 border bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-secondary">Item @(index + 1)</span>
+                            @if (SaleItems.Count > 1)
+                            {
+                                <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0"
+                                        @onclick="() => RemoveItem(index)">
+                                    🗑️ Remover
+                                </button>
+                            }
+                        </div>
+
+                        <!-- Seleção do Modelo -->
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold text-muted mb-1">Modelo de Laje *</label>
+                            <select class="form-select form-select-sm" value="@item.ProductId"
+                                    @onchange="(e) => OnItemProductChanged(index, e)">
+                                <option value="0">-- Selecione o modelo --</option>
+                                @foreach (var p in Products)
+                                {
+                                    <option value="@p.Id">@p.Name (R$ @p.DefaultPricePerSqm.ToString("N2")/m²)</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Metragem e Preço/m² -->
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold text-muted mb-1">Metragem (m²) *</label>
+                                <input type="number" step="0.1" min="0.1" class="form-control form-control-sm"
+                                       @bind="item.AreaSqm" @bind:after="RecalculateTotals" placeholder="Ex: 50.0" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold text-muted mb-1">Preço / m² (R$) *</label>
+                                <input type="number" step="0.50" min="0" class="form-control form-control-sm"
+                                       @bind="item.UnitPriceSqm" @bind:after="RecalculateTotals" placeholder="0.00" />
+                            </div>
+                        </div>
+
+                        <!-- Local ou observação do item -->
+                        <div class="mb-2">
+                            <input type="text" class="form-control form-control-sm"
+                                   @bind="item.Notes" placeholder="Local / Referência (ex: Garagem, Pavimento Superior)" />
+                        </div>
+
+                        <!-- Subtotal do Item -->
+                        <div class="text-end small pt-1 border-top">
+                            <span class="text-muted">Subtotal: </span>
+                            <span class="fw-bold text-success">@item.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                        </div>
+                    </div>
                 }
-            </select>
+            </div>
+
+            <!-- Botão Adicionar Item extra -->
+            <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-2 border-dashed fw-semibold" @onclick="AddItem">
+                ➕ Adicionar Mais um Tipo de Laje a esta Venda
+            </button>
         </div>
 
-        <!-- 3. Metragem (m²) e Preço por m² -->
-        <div class="row g-2 mb-3">
-            <div class="col-6">
-                <label class="form-label fw-bold small text-dark">METRAGEM (m²) *</label>
-                <input type="number" step="0.1" min="0.1" class="form-control" @bind="AreaSqm" @bind:after="RecalculateTotal" placeholder="Ex: 50.0" />
-            </div>
-            <div class="col-6">
-                <label class="form-label fw-bold small text-dark">PREÇO / m² (R$) *</label>
-                <input type="number" step="0.50" min="0" class="form-control" @bind="UnitPriceSqm" @bind:after="RecalculateTotal" placeholder="0.00" />
-            </div>
-        </div>
-
-        <!-- 4. Total Calculado em Destaque -->
+        <!-- 3. Totais Consolidados em Destaque -->
         <div class="p-3 rounded-3 mb-3 bg-light border text-center">
-            <span class="text-muted small fw-semibold">VALOR TOTAL DA LAJE</span>
-            <h3 class="fw-bold text-success mt-1 mb-0">@TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</h3>
+            <div class="d-flex justify-content-around">
+                <div>
+                    <span class="text-muted small fw-semibold d-block">METRAGEM TOTAL</span>
+                    <h4 class="fw-bold text-dark mt-1 mb-0">@TotalAreaSqm.ToString("N1") <small class="fs-6 fw-normal">m²</small></h4>
+                </div>
+                <div class="border-start ps-3">
+                    <span class="text-muted small fw-semibold d-block">VALOR TOTAL GERAL</span>
+                    <h3 class="fw-bold text-success mt-1 mb-0">@TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</h3>
+                </div>
+            </div>
         </div>
 
-        <!-- 5. Data e Status -->
+        <!-- 4. Data e Status -->
         <div class="row g-2 mb-3">
             <div class="col-6">
                 <label class="form-label fw-bold small text-dark">DATA</label>
@@ -95,7 +146,7 @@
             </div>
         </div>
 
-        <!-- 6. Endereço de Entrega da Obra -->
+        <!-- 5. Endereço de Entrega da Obra -->
         <div class="mb-4">
             <label class="form-label fw-bold small text-dark">ENDEREÇO DA OBRA / ENTREGA</label>
             <input type="text" class="form-control" @bind="DeliveryAddress" placeholder="Rua, número, bairro ou ponto de referência" />
@@ -156,17 +207,16 @@
     private List<Product> Products = new();
 
     private Client? SelectedClient;
-    private Product? SelectedProduct;
+    private List<SaleItem> SaleItems = new();
 
-    private double AreaSqm = 0;
-    private decimal UnitPriceSqm = 0;
-    private decimal TotalAmount = 0;
+    private double TotalAreaSqm => SaleItems.Sum(i => i.AreaSqm);
+    private decimal TotalAmount => SaleItems.Sum(i => i.TotalAmount);
+
     private DateTime SaleDate = DateTime.Now;
     private SaleStatus Status = SaleStatus.Orcamento;
     private string DeliveryAddress = string.Empty;
 
     private bool IsSaving = false;
-    private bool ShowSuccessAlert = false;
     private string ErrorMessage = string.Empty;
 
     // Modal de Novo Cliente
@@ -179,6 +229,58 @@
     {
         Clients = await Db.GetClientsAsync();
         Products = await Db.GetProductsAsync();
+
+        // Inicializa com 1 item em branco
+        AddItem();
+    }
+
+    private void AddItem()
+    {
+        SaleItems.Add(new SaleItem
+        {
+            ProductId = 0,
+            ProductName = string.Empty,
+            AreaSqm = 0,
+            UnitPriceSqm = 0,
+            TotalAmount = 0,
+            Notes = string.Empty
+        });
+    }
+
+    private void RemoveItem(int index)
+    {
+        if (SaleItems.Count > 1 && index >= 0 && index < SaleItems.Count)
+        {
+            SaleItems.RemoveAt(index);
+            RecalculateTotals();
+        }
+    }
+
+    private void OnItemProductChanged(int index, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var prodId) && prodId > 0)
+        {
+            var prod = Products.FirstOrDefault(p => p.Id == prodId);
+            if (prod != null && index >= 0 && index < SaleItems.Count)
+            {
+                var item = SaleItems[index];
+                item.ProductId = prod.Id;
+                item.ProductName = prod.Name;
+                if (item.UnitPriceSqm == 0)
+                {
+                    item.UnitPriceSqm = prod.DefaultPricePerSqm;
+                }
+                item.TotalAmount = Math.Round((decimal)item.AreaSqm * item.UnitPriceSqm, 2);
+            }
+        }
+    }
+
+    private void RecalculateTotals()
+    {
+        foreach (var it in SaleItems)
+        {
+            it.TotalAmount = Math.Round((decimal)it.AreaSqm * it.UnitPriceSqm, 2);
+        }
     }
 
     private void OnClientSelected(ChangeEventArgs e)
@@ -199,28 +301,6 @@
         }
     }
 
-    private void OnProductSelected(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var id) && id > 0)
-        {
-            SelectedProduct = Products.FirstOrDefault(p => p.Id == id);
-            if (SelectedProduct != null && UnitPriceSqm == 0)
-            {
-                UnitPriceSqm = SelectedProduct.DefaultPricePerSqm;
-                RecalculateTotal();
-            }
-        }
-        else
-        {
-            SelectedProduct = null;
-        }
-    }
-
-    private void RecalculateTotal()
-    {
-        TotalAmount = Math.Round((decimal)AreaSqm * UnitPriceSqm, 2);
-    }
-
     private async Task SaveSaleAsync()
     {
         ErrorMessage = string.Empty;
@@ -231,21 +311,9 @@
             return;
         }
 
-        if (SelectedProduct == null)
+        if (SaleItems.Count == 0 || SaleItems.Any(i => i.ProductId == 0 || i.AreaSqm <= 0 || i.UnitPriceSqm <= 0))
         {
-            ErrorMessage = "Selecione o modelo de laje.";
-            return;
-        }
-
-        if (AreaSqm <= 0)
-        {
-            ErrorMessage = "Informe a metragem (m²) da laje.";
-            return;
-        }
-
-        if (UnitPriceSqm <= 0)
-        {
-            ErrorMessage = "Informe o preço unitário por m².";
+            ErrorMessage = "Verifique os itens da venda: cada item precisa ter o modelo de laje, metragem e preço definidos.";
             return;
         }
 
@@ -256,16 +324,12 @@
             ClientId = SelectedClient.Id,
             ClientName = SelectedClient.Name,
             ClientPhone = SelectedClient.Phone,
-            ProductId = SelectedProduct.Id,
-            ProductName = SelectedProduct.Name,
-            AreaSqm = AreaSqm,
-            UnitPriceSqm = UnitPriceSqm,
-            TotalAmount = TotalAmount,
             SaleDate = SaleDate,
             Status = Status,
             DeliveryStatus = DeliveryStatus.Pendente,
             PaymentStatus = PaymentStatus.Pendente,
-            DeliveryAddress = DeliveryAddress
+            DeliveryAddress = DeliveryAddress,
+            Items = SaleItems
         };
 
         var newId = await Db.SaveSaleAsync(sale);

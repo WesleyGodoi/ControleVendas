@@ -37,23 +37,39 @@
                 </span>
             </div>
 
-            <!-- Dados da Laje -->
+            <!-- Dados dos Itens da Laje -->
             <div class="bg-light p-3 rounded-3 mb-3 border">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted small">Modelo de Laje:</span>
-                    <span class="fw-bold text-dark">@CurrentSale.ProductName</span>
-                </div>
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted small">Metragem:</span>
-                    <span class="fw-bold text-dark">@CurrentSale.AreaSqm.ToString("N1") m²</span>
-                </div>
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="text-muted small">Preço / m²:</span>
-                    <span class="fw-bold text-dark">@CurrentSale.UnitPriceSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
-                </div>
+                <span class="text-muted small fw-semibold d-block mb-2">PRODUTOS / ITENS DO PEDIDO:</span>
+                @if (CurrentSale.Items != null && CurrentSale.Items.Count > 0)
+                {
+                    <div class="d-flex flex-column gap-2 mb-2">
+                        @foreach (var it in CurrentSale.Items)
+                        {
+                            <div class="bg-white p-2 rounded-2 border small">
+                                <div class="d-flex justify-content-between fw-bold text-dark">
+                                    <span>@it.ProductName</span>
+                                    <span class="text-success">@it.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                                </div>
+                                <div class="text-muted d-flex justify-content-between">
+                                    <span>@it.AreaSqm.ToString("N1") m² x @it.UnitPriceSqm.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                                    @if (!string.IsNullOrEmpty(it.Notes))
+                                    {
+                                        <span class="fst-italic text-secondary">(@it.Notes)</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
                 <div class="d-flex justify-content-between pt-2 border-top">
-                    <span class="fw-bold text-dark">VALOR TOTAL:</span>
-                    <span class="fw-bold text-success fs-5">@CurrentSale.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                    <div>
+                        <span class="text-muted small d-block">METRAGEM TOTAL</span>
+                        <span class="fw-bold text-dark fs-6">@CurrentSale.AreaSqm.ToString("N1") m²</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-muted small d-block">VALOR TOTAL GERAL</span>
+                        <span class="fw-bold text-success fs-5">@CurrentSale.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span>
+                    </div>
                 </div>
             </div>
 
@@ -297,18 +313,41 @@
     {
         if (CurrentSale == null) return string.Empty;
         var pt = new System.Globalization.CultureInfo("pt-BR");
-        return $"🧱 *ORÇAMENTO DE LAJES PRÉ-MOLDADAS*\n" +
-               $"------------------------------------\n" +
-               $"👤 *Cliente:* {CurrentSale.ClientName}\n" +
-               $"📍 *Entrega:* {CurrentSale.DeliveryAddress}\n" +
-               $"📦 *Modelo:* {CurrentSale.ProductName}\n" +
-               $"📐 *Metragem:* {CurrentSale.AreaSqm:N1} m²\n" +
-               $"💲 *Preço / m²:* {CurrentSale.UnitPriceSqm.ToString("C2", pt)}\n" +
-               $"💰 *VALOR TOTAL:* {CurrentSale.TotalAmount.ToString("C2", pt)}\n" +
-               $"------------------------------------\n" +
-               $"Emitido em: {CurrentSale.SaleDate:dd/MM/yyyy}\n" +
-               $"Status: {CurrentSale.StatusText}\n\n" +
-               $"*Desenvolvido por Wesley Godoi*";
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("🧱 *ORÇAMENTO DE LAJES PRÉ-MOLDADAS*");
+        sb.AppendLine("------------------------------------");
+        sb.AppendLine($"👤 *Cliente:* {CurrentSale.ClientName}");
+        if (!string.IsNullOrEmpty(CurrentSale.DeliveryAddress))
+        {
+            sb.AppendLine($"📍 *Entrega:* {CurrentSale.DeliveryAddress}");
+        }
+        sb.AppendLine("------------------------------------");
+        sb.AppendLine("📦 *PRODUTOS / ITENS:*");
+
+        if (CurrentSale.Items != null && CurrentSale.Items.Count > 0)
+        {
+            foreach (var it in CurrentSale.Items)
+            {
+                var note = !string.IsNullOrEmpty(it.Notes) ? $" ({it.Notes})" : "";
+                sb.AppendLine($"• {it.ProductName}: {it.AreaSqm:N1} m² x {it.UnitPriceSqm.ToString("C2", pt)} = {it.TotalAmount.ToString("C2", pt)}{note}");
+            }
+        }
+        else
+        {
+            sb.AppendLine($"• {CurrentSale.ProductName}: {CurrentSale.AreaSqm:N1} m² x {CurrentSale.UnitPriceSqm.ToString("C2", pt)} = {CurrentSale.TotalAmount.ToString("C2", pt)}");
+        }
+
+        sb.AppendLine("------------------------------------");
+        sb.AppendLine($"📐 *METRAGEM TOTAL:* {CurrentSale.AreaSqm:N1} m²");
+        sb.AppendLine($"💰 *VALOR TOTAL:* {CurrentSale.TotalAmount.ToString("C2", pt)}");
+        sb.AppendLine("------------------------------------");
+        sb.AppendLine($"Emitido em: {CurrentSale.SaleDate:dd/MM/yyyy}");
+        sb.AppendLine($"Status: {CurrentSale.StatusText}");
+        sb.AppendLine();
+        sb.AppendLine("*Desenvolvido por Wesley Godoi*");
+
+        return sb.ToString();
     }
 
     private async Task SendWhatsAppAsync()
