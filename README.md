@@ -72,6 +72,24 @@ dotnet test ControleVendasLajes.Tests\ControleVendasLajes.Tests.csproj
 
 ---
 
+## 🍏 Versão para Testes no iPhone (iOS)
+
+O repositório conta com uma pipeline automatizada no **GitHub Actions** (`.github/workflows/build-ios.yml`) que compila o aplicativo em máquinas macOS na nuvem:
+
+1. **Como baixar a versão de testes:**
+   - Acesse a aba **[Actions](https://github.com/WesleyGodoi/ControleVendasLaje/actions)** no repositório.
+   - Clique na execução mais recente do workflow **"Build iOS (iPhone / iPad)"**.
+   - No rodapé da página (seção **Artifacts**), baixe o arquivo **`ControleVendasLajes-iPhone-IPA`** (ou `ControleVendasLajes-Simulator-App`).
+
+2. **Como instalar no seu iPhone físico:**
+   - Use um instalador gratuito como o [Sideloadly](https://sideloadly.io/) ou [AltStore](https://altstore.io/):
+     1. Conecte seu iPhone ao computador via cabo ou Wi-Fi.
+     2. Abra o Sideloadly e arraste o arquivo `.ipa` baixado.
+     3. Insira o seu Apple ID para assinar gratuitamente o app de testes.
+     4. Clique em **Start** e o app aparecerá na tela inicial do seu iPhone!
+
+---
+
 ## 👤 Autor
 
 Desenvolvido por **Wesley Godoi**  

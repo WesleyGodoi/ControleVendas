@@ -1,0 +1,82 @@
+name: Build iOS (iPhone / iPad)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 🧪 Executar Testes Automatizados
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Executar Testes de Unidade
+        run: dotnet test ControleVendasLajes.Tests/ControleVendasLajes.Tests.csproj -c Release
+
+  build-ios:
+    name: 🍎 Compilar Aplicativo iOS
+    needs: test
+    runs-on: macos-14
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Instalar Workload .NET MAUI para iOS
+        run: dotnet workload install maui-ios
+
+      - name: Restaurar Dependências
+        run: dotnet restore ControleVendasLajes/ControleVendasLajes.csproj
+
+      - name: Compilar App para iPhone físico (arm64)
+        run: |
+          dotnet publish ControleVendasLajes/ControleVendasLajes.csproj \
+            -f net9.0-ios \
+            -c Release \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:EnableCodeSigning=false \
+            -o publish_ios
+
+      - name: Gerar Pacote Instalador (.IPA)
+        run: |
+          mkdir -p Payload
+          cp -r publish_ios/ControleVendasLajes.app Payload/
+          zip -r ControleVendasLajes-iOS.ipa Payload
+          rm -rf Payload
+
+      - name: Publicar Arquivo .IPA para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControleVendasLajes-iPhone-IPA
+          path: ControleVendasLajes-iOS.ipa
+          retention-days: 14
+
+      - name: Compilar Versão para Simulador iOS
+        run: |
+          dotnet publish ControleVendasLajes/ControleVendasLajes.csproj \
+            -f net9.0-ios \
+            -c Release \
+            -p:RuntimeIdentifier=iossimulator-arm64 \
+            -o publish_simulator
+          cd publish_simulator && zip -r ../ControleVendasLajes-Simulator.zip ControleVendasLajes.app
+
+      - name: Publicar Pacote do Simulador para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControleVendasLajes-Simulator-App
+          path: ControleVendasLajes-Simulator.zip
+          retention-days: 14
