@@ -1,4 +1,4 @@
-# 🏗️ Controle de Vendas
+#🏗️ Controle de Vendas
 
 Sistema comercial completo para gestão de vendas e orçamentos de lajes pré-moldadas, clientes, entregas e fluxo de recebimentos financeiros.
 
