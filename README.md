@@ -91,3 +91,12 @@ dotnet test ControleVendasLajes.Tests/ControleVendasLajes.Tests.csproj
 
 Desenvolvido por **Wesley Godoi**  
 Versão 1.0
+
+---
+
+## 📄 Licença & Propriedade Intelectual
+
+**Software Proprietário Comercial — Todos os direitos reservados.**  
+Copyright © 2026 Wesley Godoi.
+
+Este código e seus ativos são de propriedade intelectual exclusiva do autor. É proibida a reprodução, cópia, distribuição, modificação ou exploração comercial deste projeto sem autorização prévia por escrito. Consulte o arquivo [LICENSE](LICENSE) para maiores detalhes.
