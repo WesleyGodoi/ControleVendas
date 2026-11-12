@@ -121,6 +121,9 @@ public class Sale
     [Indexed]
     public int ProductId { get; set; }
 
+    [MaxLength(60)]
+    public string OrderNumber { get; set; } = string.Empty; // Número ou referência do Pedido
+
     public string ClientName { get; set; } = string.Empty;
     public string ClientPhone { get; set; } = string.Empty;
     public string DeliveryAddress { get; set; } = string.Empty;

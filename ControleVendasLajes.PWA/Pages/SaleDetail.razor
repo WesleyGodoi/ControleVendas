@@ -32,7 +32,15 @@
         <div class="card-app p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                    <h3 class="h6 fw-bold text-dark mb-0">@CurrentSale.ClientName</h3>
+                    <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                        <h3 class="h6 fw-bold text-dark mb-0">@CurrentSale.ClientName</h3>
+                        @if (!string.IsNullOrEmpty(CurrentSale.OrderNumber))
+                        {
+                            <span class="badge bg-light text-dark border fw-normal" style="font-size: 11px;">
+                                📋 Pedido: @CurrentSale.OrderNumber
+                            </span>
+                        }
+                    </div>
                     <div class="text-muted small" style="font-size: 11.5px;">
                         📞 @(string.IsNullOrEmpty(CurrentSale.ClientPhone) ? "Sem telefone" : CurrentSale.ClientPhone)
                     </div>
@@ -322,6 +330,10 @@
         sb.AppendLine("🧱 *ORÇAMENTO DE LAJES PRÉ-MOLDADAS*");
         sb.AppendLine("------------------------------------");
         sb.AppendLine($"👤 *Cliente:* {CurrentSale.ClientName}");
+        if (!string.IsNullOrEmpty(CurrentSale.OrderNumber))
+        {
+            sb.AppendLine($"📋 *Pedido:* {CurrentSale.OrderNumber}");
+        }
         if (!string.IsNullOrEmpty(CurrentSale.DeliveryAddress))
         {
             sb.AppendLine($"📍 *Entrega:* {CurrentSale.DeliveryAddress}");

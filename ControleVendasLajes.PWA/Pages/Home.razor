@@ -78,7 +78,15 @@
                 {
                     <div class="card-app p-2 mb-0" style="cursor: pointer;" @onclick="() => OpenSale(sale.Id)">
                         <div class="d-flex justify-content-between align-items-start mb-0">
-                            <span class="fw-bold text-dark small">@sale.ClientName</span>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="fw-bold text-dark small">@sale.ClientName</span>
+                                @if (!string.IsNullOrEmpty(sale.OrderNumber))
+                                {
+                                    <span class="badge bg-light text-dark border fw-normal" style="font-size: 9.5px;">
+                                        Ped: @sale.OrderNumber
+                                    </span>
+                                }
+                            </div>
                             <span class="badge-app @GetStatusBadgeClass(sale.Status)">@sale.StatusText</span>
                         </div>
                         <div class="text-muted small mb-1" style="font-size: 11px;">

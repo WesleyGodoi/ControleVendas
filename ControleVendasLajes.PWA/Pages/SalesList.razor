@@ -13,7 +13,7 @@
 
     <!-- Barra de Busca -->
     <div class="mb-3">
-        <input type="text" class="form-control" placeholder="🔍 Buscar por cliente, laje ou telefone..."
+        <input type="text" class="form-control" placeholder="🔍 Buscar por cliente, pedido, laje ou telefone..."
                @bind="SearchText" @bind:event="oninput" />
     </div>
 
@@ -66,7 +66,15 @@
                 <div class="card-app p-2 px-3 mb-0" style="cursor: pointer;" @onclick="() => OpenSale(sale.Id)">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <div>
-                            <h4 class="h6 fw-bold mb-0 text-dark" style="font-size: 13.5px;">@sale.ClientName</h4>
+                            <div class="d-flex align-items-center gap-1 flex-wrap">
+                                <h4 class="h6 fw-bold mb-0 text-dark" style="font-size: 13.5px;">@sale.ClientName</h4>
+                                @if (!string.IsNullOrEmpty(sale.OrderNumber))
+                                {
+                                    <span class="badge bg-light text-dark border fw-normal" style="font-size: 10px;">
+                                        Ped: @sale.OrderNumber
+                                    </span>
+                                }
+                            </div>
                             <span class="text-muted" style="font-size: 11px;">@sale.SaleDate.ToString("dd/MM/yyyy")</span>
                         </div>
                         <span class="badge-app @GetStatusBadgeClass(sale.Status)">@sale.StatusText</span>
@@ -131,7 +139,8 @@
                 result = result.Where(s =>
                     s.ClientName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     s.ProductName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                    s.ClientPhone.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                    s.ClientPhone.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrEmpty(s.OrderNumber) && s.OrderNumber.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
             }
 
             result = SelectedFilter switch
