@@ -33,7 +33,7 @@
         </button>
         <button class="btn btn-sm @(SelectedFilter == "PendenteEntrega" ? "btn-danger" : "btn-outline-secondary") rounded-pill px-3"
                 @onclick='() => SelectedFilter = "PendenteEntrega"'>
-            Entrega Pendente (@AllSales.Count(s => s.DeliveryStatus != DeliveryStatus.Entregue))
+            Entrega Pendente (@AllSales.Count(s => s.Status == SaleStatus.Fechado && s.DeliveryStatus != DeliveryStatus.Entregue))
         </button>
     </div>
 
@@ -138,7 +138,7 @@
             {
                 "Orcamento" => result.Where(s => s.Status == SaleStatus.Orcamento),
                 "Fechado" => result.Where(s => s.Status == SaleStatus.Fechado),
-                "PendenteEntrega" => result.Where(s => s.DeliveryStatus != DeliveryStatus.Entregue),
+                "PendenteEntrega" => result.Where(s => s.Status == SaleStatus.Fechado && s.DeliveryStatus != DeliveryStatus.Entregue),
                 _ => result
             };
 

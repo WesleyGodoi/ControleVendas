@@ -321,13 +321,14 @@ public class StorageDatabaseService
     {
         await InitializeAsync();
         var monthSales = _sales.Where(s => s.SaleDate.Month == month && s.SaleDate.Year == year).ToList();
+        var closedMonthSales = monthSales.Where(s => s.Status == SaleStatus.Fechado).ToList();
 
         return new MonthlySummaryDto
         {
-            TotalSqmSold = monthSales.Sum(s => s.AreaSqm),
-            TotalRevenue = monthSales.Sum(s => s.TotalAmount),
-            PendingDeliveriesCount = _sales.Count(s => s.DeliveryStatus != DeliveryStatus.Entregue),
-            PendingPaymentsCount = _sales.Count(s => s.PaymentStatus != PaymentStatus.Pago)
+            TotalSqmSold = closedMonthSales.Sum(s => s.AreaSqm),
+            TotalRevenue = closedMonthSales.Sum(s => s.TotalAmount),
+            PendingDeliveriesCount = _sales.Count(s => s.Status == SaleStatus.Fechado && s.DeliveryStatus != DeliveryStatus.Entregue),
+            PendingPaymentsCount = _sales.Count(s => s.Status == SaleStatus.Fechado && s.PaymentStatus != PaymentStatus.Pago)
         };
     }
 
